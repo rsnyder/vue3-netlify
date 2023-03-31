@@ -1,4 +1,4 @@
-import fetch from 'node-fetch'
+import axios from 'axios';
 
 export async function handler(event, context, callback) {
 
@@ -8,14 +8,18 @@ export async function handler(event, context, callback) {
     const qid = event.path.split('/').filter(pe => pe).pop()
     const URL = `https://www.wikidata.org/wiki/Special:EntityData/${qid}.json`
     console.log(URL)
-    const response = await fetch(URL)
-    const data = await response.json()
+
+    const resp = await axios.get(URL, {
+        headers: {
+          Accept: 'application/json'
+        }
+    })
 
     return {
         statusCode: 200,
         // By setting the data to data.results, we eliminate the need for our client app to do this
         body: JSON.stringify({
-            data: data.entities[qid]
+            data: resp.data.entities[qid]
         })
     }
 }
