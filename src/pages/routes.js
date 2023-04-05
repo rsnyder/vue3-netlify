@@ -1,17 +1,17 @@
 import {createRouter} from 'vue-router'
-import Homepage from './Home.vue';
-import Cart from './Cart.vue';
-import Bootstrap from './Bootstrap.vue';
-import { SignInComponent } from './user';
+import Home from './Home.vue';
+import Entity from './Entity.vue';
+import Fontawesome from './Fontawesome.vue';
+import Shoelace from './Shoelace.vue';
 
 const routes = [
-  { path: '/', component: Homepage },
+  { name: 'home', path: '/', component: Home },
 
-  { path: '/sign-in/', component: SignInComponent },
+  { name: 'fontawesome', path: '/fontawesome/', component: Fontawesome },
 
-  { path: '/cart/', component: Cart },
+  { name: 'shoelace', path: '/shoelace/', component: Shoelace },
 
-  { path: '/bootstrap/', component: Bootstrap },
+  { name: 'entity', path: '/entity/:qid', component: Entity },
 
 ]
 

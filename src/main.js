@@ -1,15 +1,25 @@
-// import { createApp } from 'vue'
-import Vue, { createApp } from '@vue/compat' // For bootstrap-vue
+import { createApp } from 'vue'
 import App from './App.vue'
 import store from './lib/store.js'
 import router from './lib/router.js'
+import { defineCustomElement } from 'vue'
 
-/* bootstrap-vue setup */
-import BootstrapVue from 'bootstrap-vue'
-import 'bootstrap/dist/css/bootstrap.css'
-import 'bootstrap-vue/dist/bootstrap-vue.css'
-Vue.use(BootstrapVue)
-/* end bootstrap-vue setup */
+/* shoelace.style setup */
+import '@shoelace-style/shoelace/dist/themes/light.css'
 
-const app = createApp(App)
+import FontAwesomeIcon from './fontawesome-icons'
+
+import EntityCard from './components/EntityCard.ce.vue'
+import EntityHeader from './components/EntityHeader.ce.vue'
+import LanguageSelector from './components/LanguageSelector.ce.vue'
+import Statements from './components/Statements.ce.vue'
+import WikidataSearch from './components/WikidataSearch.ce.vue'
+
+customElements.define('ve-entity-card', defineCustomElement(EntityCard))
+customElements.define('ve-entity-header', defineCustomElement(EntityHeader))
+customElements.define('ve-language-selector', defineCustomElement(LanguageSelector))
+customElements.define('ve-statements', defineCustomElement(Statements))
+customElements.define('ve-wikidata-search', defineCustomElement(WikidataSearch))
+
+const app = createApp(App).component('font-awesome-icon', FontAwesomeIcon)
 app.use(router).use(store).mount('#app')
