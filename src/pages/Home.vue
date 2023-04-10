@@ -9,18 +9,29 @@
   <script setup lang="ts">
   
     import { computed, onMounted, ref, toRaw, watch, nextTick } from 'vue'
+    import { useRouter, useRoute } from 'vue-router'
     import Toolbar from '../components/Toolbar.vue'
   
-    const root = ref<HTMLElement | null>(null)
-    const host = computed(() => (root.value?.getRootNode() as any)?.host)
-    const shadowRoot = computed(() => root?.value?.parentNode)
+    import { useEntitiesStore } from '../store/entities'
+    import { storeToRefs } from 'pinia'
+    const store = useEntitiesStore()
+
+    const { language, qid } = storeToRefs(store)
     
-    onMounted(() => init() )
-  
-    function init() {
-      console.log('Home.init')
-    }
-  
+    const route = useRoute()
+    const router = useRouter()
+
+    const root = ref<HTMLElement | null>(null)
+    
+    watch(qid, () => { if (qid.value) setRoute(qid.value, language.value) })
+    watch(language, () => { if (qid.value) setRoute(qid.value, language.value) })
+
+  function setRoute(qid:string, lang:string) {
+    let options:any = { name: 'entity', params: { qid } }
+    if (lang !== 'en') options.query = { lang }
+    router.push(options)
+  }
+
   </script>
   
   <style>

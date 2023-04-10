@@ -59,7 +59,7 @@ export const useEntitiesStore = defineStore('entities', {
           console.error('Error loading entities:', err)
         }
         this.fetching = false
-        this.entity = setEntityForLanguage(this.qid, this.language, this.entityData)
+        this.entity = this.setEntityForLanguage(this.qid, this.language, this.entityData)
       }
     },
     setQid(qid:any) {
@@ -67,7 +67,7 @@ export const useEntitiesStore = defineStore('entities', {
         this.qid = qid
         // console.log(`qid=${this.qid}`)
         if (this.entityData[qid]) {
-          this.entity = setEntityForLanguage(this.qid, this.language, this.entityData)
+          this.entity = this.setEntityForLanguage(this.qid, this.language, this.entityData)
           this.updateLabels()
         } else {
           this.fetch(qid)
@@ -75,15 +75,17 @@ export const useEntitiesStore = defineStore('entities', {
       }
     },
     setSummaryText(qid:any, lang:any, text:any) {
+      // console.log(`setEntityForLanguage: qid=${qid} language=${lang} text=${text}`)
       let entity = this.entityData[qid]
       entity.summaryText[lang] = text
       this.entityData = {...this.entityData, ...{[qid]: entity}}
+      if (this.qid === qid) this.entity = this.setEntityForLanguage(this.qid, this.language, this.entityData)
     },
     setLanguage(lang:any) {
       if (lang !== this.language) {
         this.language = lang
         // console.log(`language=${this.language}`)
-        this.entity = setEntityForLanguage(this.qid, this.language, this.entityData)
+        this.entity = this.setEntityForLanguage(this.qid, this.language, this.entityData)
         this.updateLabels(this.language)
       }
     },
@@ -140,6 +142,36 @@ export const useEntitiesStore = defineStore('entities', {
         }
         this.urlformattersFetching = false
       }
+    },
+
+    setEntityForLanguage(qid:string, language:string, entityData:any) {
+      // console.log(`setEntityForLanguage: qid=${qid} language=${language}`, toRaw(entityData))
+      if (qid && entityData[qid]) {
+        let orig = entityData[qid]
+        let _entity:any = {
+          id: orig.id,
+          label: (orig.labels[language] || orig.labels.en || orig.labels[Object.keys(orig.labels)[0]]).value
+        }
+        if (orig.descriptions && orig.aliases[language]) _entity.description = orig.descriptions[language].value
+        if (orig.aliases && orig.aliases[language]) _entity.aliases = orig.aliases[language].map((a:any) => a.value)
+        if (orig.claims) _entity.claims = orig.claims
+        if (orig.sitelinks && orig.sitelinks[`${language}wiki`]) {
+          _entity.sitelinks = orig.sitelinks[`${language}wiki`]
+          if (orig.summaryText[language]) {
+            _entity.summaryText = orig.summaryText[language]
+          } else {
+            let page: number = orig.sitelinks[`${language}wiki`].url.replace(/\/w\//, '/wiki').split('/wiki/').pop()
+            fetch(`https://${language}.wikipedia.org/api/rest_v1/page/summary/${page}`)
+            .then(resp => resp.json())
+            .then(resp => {
+              let summaryText = resp['extract_html'] || resp['extract']
+              this.setSummaryText(qid, this.language, summaryText)
+              // _entity.summaryText = orig.summaryText[language]
+            })
+          }
+        }
+        return _entity
+      }
     }
 
   }
@@ -185,36 +217,6 @@ function findQids(entity:any) {
   })
   // console.log(`findQids=${entity.id} qids=${qids.size} elapsed=${Math.round(performance.now() - start)}ms`)
   return Array.from(qids)
-}
-
-function setEntityForLanguage(qid:string, language:string, entityData:any) {
-  // console.log(`setEntityForLanguage: qid=${qid} language=${language}`, toRaw(entityData))
-  if (qid && entityData[qid]) {
-    let orig = entityData[qid]
-    let _entity:any = {
-      id: orig.id,
-      label: (orig.labels[language] || orig.labels.en || orig.labels[Object.keys(orig.labels)[0]]).value,
-      summaryText: {}
-    }
-    if (orig.descriptions && orig.aliases[language]) _entity.description = orig.descriptions[language].value
-    if (orig.aliases && orig.aliases[language]) _entity.aliases = orig.aliases[language].map((a:any) => a.value)
-    if (orig.claims) _entity.claims = orig.claims
-    if (orig.sitelinks && orig.sitelinks[`${language}wiki`]) {
-      _entity.sitelinks = orig.sitelinks[`${language}wiki`]
-      if (orig.summaryText[language]) {
-        _entity.summaryText = orig.summaryText[language]
-        // _entity.summaryText[language] = ''
-      } else {
-        let page: number = orig.sitelinks[`${language}wiki`].url.replace(/\/w\//, '/wiki').split('/wiki/').pop()
-        fetch(`https://${language}.wikipedia.org/api/rest_v1/page/summary/${page}`)
-        .then(resp => resp.json())
-        .then(resp => {
-          _entity.summaryText[language] = resp['extract_html'] || resp['extract']
-        })
-      }
-    }
-    return _entity
-  }
 }
 
 function langLabels(labels:any, language:string) {

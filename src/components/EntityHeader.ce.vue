@@ -9,7 +9,7 @@
         </div>
         <div v-if="entity.aliases" class="aliases" v-html="entity.aliases.join(' | ')"></div>
         <div v-if="entity.description" class="description" v-html="entity.description"></div>
-        <div class="summary-text">
+        <div v-if="summaryText" class="summary-text">
           <div v-html="summaryText"></div>
           <div class="more" v-if="wikipedia">Source: <a :href="wikipedia.url">{{wikipedia.title}}</a></div>
         </div>
@@ -36,7 +36,7 @@
 
 <script setup lang="ts">
 
-  import { computed } from 'vue'
+  import { computed, toRaw, watch } from 'vue'
   import {Md5} from 'ts-md5'
 
   import { useEntitiesStore } from '../store/entities'
@@ -44,15 +44,17 @@
   const store = useEntitiesStore()
   const { entity } = storeToRefs(store)
 
+  // watch(entity, () => console.log('entity', toRaw(entity.value)))
+
   const image = computed(() => entity.value.claims && entity.value.claims.P18 && entity.value.claims.P18[0].mainsnak.datavalue.value)
   const thumbnail = computed(() => image.value ? mwImage(image.value, 500) : null)
 
   const wikipedia = computed(() => entity.value.sitelinks )
-  const wikidataUrl = computed(() =>  '' )
+  const wikidataUrl = computed(() =>  `https://www.wikidata.org/entity/${entity.value.id}` )
   const commonsCategoryUrl = computed(() =>  '' )
   const wikiquoteUrl = computed(() =>  '' )
   const wikivoyageUrl = computed(() =>  '' )
-  const summaryText = computed(() =>  entity.value.summaryText )
+  const summaryText = computed(() => entity.value.summaryText)
 
   function mwImage(mwImg: string, width: number) {
     // Converts Wikimedia commons image URL to a thumbnail link

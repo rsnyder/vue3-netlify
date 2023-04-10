@@ -145,6 +145,9 @@
                   </span>
                   <!-- <span v-if="descriptions[pval.mainsnak.datavalue.value.id]" class="description" v-html="description(pval.mainsnak.datavalue.value.id)"></span> -->
                 </template>
+                <span v-else-if="pval.mainsnak.datatype === 'wikibase-property'" :class="`prop-value ${pval.mainsnak.datatype}`">
+                  <a :href="`http://www.wikidata.org/entity/${pval.mainsnak.datavalue.value.id}`" target="_blank" v-html="`${labels[pval.mainsnak.datavalue.value.id]} (${pval.mainsnak.datavalue.value.id})`"></a>
+                </span>
                 <span v-else-if="pval.mainsnak.datatype === 'quantity'" :class="`prop-value ${pval.mainsnak.datatype}`" v-html="quantity(pval.mainsnak.datavalue.value)"></span>
                 <span v-else-if="pval.mainsnak.datatype === 'time'" :class="`prop-value ${pval.mainsnak.datatype}`" v-html="formattedTime(pval.mainsnak.datavalue.value)"></span>
                 <template v-else-if="pval.mainsnak.datatype === 'monolingualtext'">
@@ -256,6 +259,7 @@
   const { language, labels, urlformatters, entity } = storeToRefs(store)
 
   // watch(entity, () => console.log(toRaw(entity.value)))
+  // watch(labels, () => console.log(toRaw(labels.value)))
 
   const props = defineProps({
     moduleId: { type: String, default: () => '' }

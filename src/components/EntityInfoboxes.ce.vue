@@ -65,7 +65,7 @@
         targets, {
         allowHTML: true,
         interactive: true,
-        delay: [null, null],
+        delay: [200, null],
         placement: 'auto',
         theme: 'light-border',
         touch: 'hold',
