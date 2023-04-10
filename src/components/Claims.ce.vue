@@ -46,7 +46,12 @@
                     <template v-else-if="pval.mainsnak.datatype === 'monolingualtext'">
                       <span v-if="pval.mainsnak.datavalue.value.language === language" :class="`prop-value ${pval.mainsnak.datatype}`" v-html="`${pval.mainsnak.datavalue.value.text}`"></span>
                     </template>
-                    <img v-else-if="pval.mainsnak.datatype === 'commonsMedia' && commonsMediaImageMime(pval.mainsnak.datavalue.value)" :class="`prop-value ${pval.mainsnak.datatype}`" :src="`https://commons.wikimedia.org/w/thumb.php?f=${encodeURIComponent(pval.mainsnak.datavalue.value)}&w=200`">                    
+                    <template v-else-if="pval.mainsnak.datatype === 'commonsMedia' && commonsMediaImageMime(pval.mainsnak.datavalue.value)">
+                      <a :href="`https://commons.wikimedia.org/wiki/File:${pval.mainsnak.datavalue.value}`" target="_blank">
+                        <img :class="`prop-value ${pval.mainsnak.datatype}`" :src="`https://commons.wikimedia.org/w/thumb.php?f=${encodeURIComponent(pval.mainsnak.datavalue.value)}&w=200`">
+                      </a>              
+                      <br/><a :href="`https://commons.wikimedia.org/wiki/File:${pval.mainsnak.datavalue.value}`" target="_blank" v-html="pval.mainsnak.datavalue.value"></a>              
+                    </template>
                     <audio v-else-if="pval.mainsnak.datatype === 'commonsMedia' && commonsMediaAudioMime(pval.mainsnak.datavalue.value)" :class="`prop-value ${pval.mainsnak.datatype}`" controls>
                       <source :src="commonsURL(pval.mainsnak.datavalue.value)" :type="commonsMediaAudioMime(pval.mainsnak.datavalue.value)">
                     </audio>
@@ -153,7 +158,12 @@
                 <template v-else-if="pval.mainsnak.datatype === 'monolingualtext'">
                   <span v-if="pval.mainsnak.datavalue.value.language === language" :class="`prop-value ${pval.mainsnak.datatype}`" v-html="`${pval.mainsnak.datavalue.value.text}`"></span>
                 </template>
-                <img v-else-if="pval.mainsnak.datatype === 'commonsMedia' && commonsMediaImageMime(pval.mainsnak.datavalue.value)" :class="`prop-value ${pval.mainsnak.datatype}`" :src="`https://commons.wikimedia.org/w/thumb.php?f=${encodeURIComponent(pval.mainsnak.datavalue.value)}&w=200`">                    
+                <template v-else-if="pval.mainsnak.datatype === 'commonsMedia' && commonsMediaImageMime(pval.mainsnak.datavalue.value)">
+                  <a :href="`https://commons.wikimedia.org/wiki/File:${pval.mainsnak.datavalue.value}`" target="_blank">
+                    <img :class="`prop-value ${pval.mainsnak.datatype}`" :src="`https://commons.wikimedia.org/w/thumb.php?f=${encodeURIComponent(pval.mainsnak.datavalue.value)}&w=200`">
+                  </a>              
+                  <br/><a :href="`https://commons.wikimedia.org/wiki/File:${pval.mainsnak.datavalue.value}`" target="_blank" v-html="pval.mainsnak.datavalue.value"></a>              
+                </template>
                 <audio v-else-if="pval.mainsnak.datatype === 'commonsMedia' && commonsMediaAudioMime(pval.mainsnak.datavalue.value)" :class="`prop-value ${pval.mainsnak.datatype}`" controls>
                   <source :src="commonsURL(pval.mainsnak.datavalue.value)" :type="commonsMediaAudioMime(pval.mainsnak.datavalue.value)">
                 </audio>
