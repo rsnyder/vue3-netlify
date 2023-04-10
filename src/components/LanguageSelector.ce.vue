@@ -1,9 +1,9 @@
 <template>
   <div class="language-selector">
     <sl-dropdown>
-      <sl-button slot="trigger" caret v-html="selectedLanguage.label"></sl-button>
+      <sl-button slot="trigger" caret v-html="selectedLanguage?.label"></sl-button>
       <sl-menu>
-        <sl-menu-item v-for="lang in languages" v-html="lang.label" @click="selectedLanguage = lang"></sl-menu-item>
+        <sl-menu-item v-for="lang in languages" v-html="lang.label" @click="onClick(lang.code)"></sl-menu-item>
       </sl-menu>
     </sl-dropdown>
   </div>
@@ -12,14 +12,18 @@
 
 <script setup lang="ts">
 
-  import { onMounted, ref, watch } from 'vue'
+  import { computed } from 'vue'
+  
   import '@shoelace-style/shoelace/dist/components/button/button.js'
   import '@shoelace-style/shoelace/dist/components/dropdown/dropdown.js'
   import '@shoelace-style/shoelace/dist/components/icon/icon.js'
   import '@shoelace-style/shoelace/dist/components/menu/menu.js'
   import '@shoelace-style/shoelace/dist/components/menu-item//menu-item.js'
 
-  const emit = defineEmits(['language-selected'])
+  import { useEntitiesStore } from '../store/entities'
+  import { storeToRefs } from 'pinia'
+  const store = useEntitiesStore()
+  const { language } = storeToRefs(store)
 
   const languages = [
     {code: 'ar', label: 'العربية', tooltip: 'Arabic'},
@@ -41,24 +45,10 @@
     {code: 'id', label: 'Bahasa Indonesia', tooltip: 'Indonesian'}
   ]
 
-  const props = defineProps({
-    language: { type: String, default: 'en' }
-  })
+  const selectedLanguage = computed(() => languages.find(lang => lang.code === language.value) || languages.find(lang => lang.code === 'en'))
 
-  const selectedLanguage = ref<any>(languages.find(lang => lang.code === props.language) || languages.find(lang => lang.code === 'en'))
-
-  onMounted(() => evalProps() )
-  watch(props, () => evalProps() )
-
-  watch (selectedLanguage, () => {
-    emit('language-selected', selectedLanguage.value)
-  })
-
-  function evalProps() {
-    selectedLanguage.value = languages.find(lang => lang.code === props.language) || languages.find(lang => lang.code === 'en')
+  function onClick(lang:string) {
+    store.setLanguage(lang)
   }
 
 </script>
-
-<style scoped>
-</style>

@@ -36,15 +36,13 @@
 
 <script setup lang="ts">
 
-  import { computed, onMounted, ref, watch } from 'vue'
+  import { computed } from 'vue'
   import {Md5} from 'ts-md5'
 
-  const props = defineProps({
-    entity: { type: Object }
-  })
-
-  const entity = <any>ref()
-  // watch(entity, () => console.log(entity.value))
+  import { useEntitiesStore } from '../store/entities'
+  import { storeToRefs } from 'pinia'
+  const store = useEntitiesStore()
+  const { entity } = storeToRefs(store)
 
   const image = computed(() => entity.value.claims && entity.value.claims.P18 && entity.value.claims.P18[0].mainsnak.datavalue.value)
   const thumbnail = computed(() => image.value ? mwImage(image.value, 500) : null)
@@ -55,14 +53,6 @@
   const wikiquoteUrl = computed(() =>  '' )
   const wikivoyageUrl = computed(() =>  '' )
   const summaryText = computed(() =>  entity.value.summaryText )
-
-  onMounted(() => evalProps())
-  watch(props, () => evalProps())
-
-  function evalProps() {
-    // console.log('EntityHeader.evalProps', props.entity)
-    entity.value = props.entity
-  }
 
   function mwImage(mwImg: string, width: number) {
     // Converts Wikimedia commons image URL to a thumbnail link

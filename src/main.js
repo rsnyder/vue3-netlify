@@ -5,20 +5,28 @@ import router from './lib/router.js'
 import { defineCustomElement } from 'vue'
 
 /* shoelace.style setup */
-import '@shoelace-style/shoelace/dist/themes/light.css'
+// import '@shoelace-style/shoelace/dist/themes/light.css'
+// import '@shoelace-style/shoelace/dist/themes/dark.css'
+import './themes/juncture.css'
 
 import FontAwesomeIcon from './fontawesome-icons'
 
+import Claims from './components/Claims.ce.vue'
 import EntityCard from './components/EntityCard.ce.vue'
 import EntityHeader from './components/EntityHeader.ce.vue'
+import EntityInfoboxes from './components/EntityInfoboxes.ce.vue'
 import LanguageSelector from './components/LanguageSelector.ce.vue'
 import Statements from './components/Statements.ce.vue'
+import ThemeSelector from './components/ThemeSelector.ce.vue'
 import WikidataSearch from './components/WikidataSearch.ce.vue'
 
+customElements.define('ve-claims', defineCustomElement(Claims))
 customElements.define('ve-entity-card', defineCustomElement(EntityCard))
 customElements.define('ve-entity-header', defineCustomElement(EntityHeader))
+customElements.define('ve-entity-infoboxes', defineCustomElement(EntityInfoboxes))
 customElements.define('ve-language-selector', defineCustomElement(LanguageSelector))
 customElements.define('ve-statements', defineCustomElement(Statements))
+customElements.define('ve-theme-selector', defineCustomElement(ThemeSelector))
 customElements.define('ve-wikidata-search', defineCustomElement(WikidataSearch))
 
 const app = createApp(App).component('font-awesome-icon', FontAwesomeIcon)

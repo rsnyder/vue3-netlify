@@ -27,7 +27,7 @@
           <ul>
             <li>
               <span class="label" v-html="item.label"></span>
-              <span v-if="item.aliases" class="aliases">({item.aliases.join(', ')})</span>
+              <span v-if="item.aliases" class="aliases">({{item.aliases.join(', ')}})</span>
             </li>
             <li class="description" v-html="item.description"></li>
           </ul>
@@ -47,12 +47,10 @@
   import '@shoelace-style/shoelace/dist/components/menu/menu.js'
   import '@shoelace-style/shoelace/dist/components/menu-item/menu-item.js'
 
-  const emit = defineEmits(['entity-selected'])
-  // defineExpose({ increment:incrementVal }) // Expose resource for external use
-
-  const props = defineProps({
-    language: { type: String, default: 'en' }
-  })
+  import { useEntitiesStore } from '../store/entities'
+  import { storeToRefs } from 'pinia'
+  const store = useEntitiesStore()
+  const { language } = storeToRefs(store)
 
   const wdResults = ref<any[]>([])
   const autocompleteResults = ref<HTMLInputElement>()
@@ -66,7 +64,6 @@
 
   const root = ref<HTMLElement | null>(null)
   const shadowRoot = computed(() => root?.value?.parentNode)
-  const host = computed(() => (root.value?.getRootNode() as any)?.host)
 
   // watch(host, () => init())
   onMounted(() => init() )
@@ -123,7 +120,7 @@
   function doSearch() {
     if (!searchFor.value || isSearching.value) return
     isSearching.value = true
-    let url = `https://www.wikidata.org/w/api.php?action=wbsearchentities&search=${searchFor.value}&uselang=${props.language}&language=${props.language}&format=json&origin=*&continue=${searchContinue.value}`
+    let url = `https://www.wikidata.org/w/api.php?action=wbsearchentities&search=${searchFor.value}&uselang=${language.value}&language=${language.value}&format=json&origin=*&continue=${searchContinue.value}`
     fetch(url)
       .then(res => res.json())
       .then(res => {
@@ -139,7 +136,7 @@
   }
 
   function itemSelected(item:any) {
-    emit('entity-selected', item)
+    store.setQid(item.id)
     reset()
   }
 
@@ -149,7 +146,7 @@
 
   :host {
     font-family: Roboto, sans-serif;
-    display: inline-block;
+    /* display: inline-block; */
   }
 
   * {
@@ -172,8 +169,9 @@
   }
 
   .wikidata-search {
-    display: inline-block;
-    height: calc(1.5em + 0.75rem + 2px);
+    /* display: inline-block; */
+    /* height: calc(1.5em + 0.75rem + 2px); */
+    height: 40px;
     margin-right: 3px;
     border: 1px solid #ccc;
     border-radius: 3px;
