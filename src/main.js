@@ -17,7 +17,9 @@ import EntityHeader from './components/EntityHeader.ce.vue'
 import EntityInfoboxes from './components/EntityInfoboxes.ce.vue'
 import LanguageSelector from './components/LanguageSelector.ce.vue'
 import Statements from './components/Statements.ce.vue'
+import Template from './components/Template.ce.vue'
 import ThemeSelector from './components/ThemeSelector.ce.vue'
+import Viewers from './components/Viewers.ce.vue'
 import WikidataSearch from './components/WikidataSearch.ce.vue'
 
 customElements.define('ve-claims', defineCustomElement(Claims))
@@ -26,7 +28,9 @@ customElements.define('ve-entity-header', defineCustomElement(EntityHeader))
 customElements.define('ve-entity-infoboxes', defineCustomElement(EntityInfoboxes))
 customElements.define('ve-language-selector', defineCustomElement(LanguageSelector))
 customElements.define('ve-statements', defineCustomElement(Statements))
+customElements.define('ve-template', defineCustomElement(Template))
 customElements.define('ve-theme-selector', defineCustomElement(ThemeSelector))
+customElements.define('ve-viewers', defineCustomElement(Viewers))
 customElements.define('ve-wikidata-search', defineCustomElement(WikidataSearch))
 
 const app = createApp(App).component('font-awesome-icon', FontAwesomeIcon)

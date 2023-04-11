@@ -24,6 +24,7 @@ export const useEntitiesStore = defineStore('entities', {
     fetching: false,
     labelsFetching: false,
     urlformattersFetching: false,
+    active: ''
   }),
 
   getters: {
@@ -88,6 +89,10 @@ export const useEntitiesStore = defineStore('entities', {
         this.entity = this.setEntityForLanguage(this.qid, this.language, this.entityData)
         this.updateLabels(this.language)
       }
+    },
+
+    setActive(active:string) {
+      if (active !== this.active) this.active = active
     },
 
     async updateLabels() {
