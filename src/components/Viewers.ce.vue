@@ -16,10 +16,10 @@
             <ve-statements></ve-statements>
           </sl-tab-panel>
           <sl-tab-panel name="wd-referencing">
-            <ve-template label="Wikidata - Referencing Entities" id="wd-referencing"></ve-template>
+            <ve-referencing id="wd-referencing"></ve-referencing>
           </sl-tab-panel>
           <sl-tab-panel name="wd-sites">
-            <ve-template label="Wikidata - Site Links" id="wd-sites"></ve-template>
+            <ve-sites id="wd-sites"></ve-sites>
           </sl-tab-panel>
         </sl-tab-group>
       </sl-tab-panel>
@@ -100,7 +100,6 @@
   import { storeToRefs } from 'pinia'
   const store = useEntitiesStore()
   const { active } = storeToRefs(store)
-  console.log(toRaw(active.value))
 
   const root = ref<HTMLElement | null>(null)
   const shadowRoot = computed(() => root?.value?.parentNode)
@@ -112,7 +111,7 @@
     if (tabs) init(tabs)
   })
 
-  watch(active, () => console.log(toRaw(active.value)))
+  // watch(active, () => console.log(toRaw(active.value)))
   const activeGroup = computed(() => active.value.split('/')[0])
   const activeViewer = computed(() => active.value.split('/')[1])
 
@@ -142,7 +141,7 @@
             group.value = el.getAttribute('name')
             let found = Array.from(el.children[0].children).find((c:any) => c.active && c.nodeName === 'SL-TAB-PANEL')
             if (found) viewer.value = found.getAttribute('name') || undefined
-            else viewer.value = defaults[group.value]
+            // else viewer.value = defaults[group.value]
           }
         })
     })

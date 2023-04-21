@@ -302,6 +302,7 @@
         .map(pid => [pid, entity.value.claims[pid]]))
       : []
   })
+  // watch(claims, () => console.log(toRaw(claims.value)))
 
   function entitySelected(e: any) {
     store.setQid(e.target.dataset.qid)

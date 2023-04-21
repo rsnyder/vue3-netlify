@@ -1,0 +1,14 @@
+- label: Label1
+  description: Description 1
+  aliases:
+  - alias1
+  - alias2
+- label: Label2
+  description: Description 2
+  aliases:
+  - alias1
+  - alias2
+  claims:
+    property: ''
+    type: ''
+    value: ''

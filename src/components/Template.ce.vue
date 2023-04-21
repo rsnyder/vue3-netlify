@@ -2,7 +2,7 @@
 
   <div ref="root">
     <h1 v-html="props.label"></h1>
-    <span v-html="props.id"></span>
+    <span v-html="initCtr"></span>
   </div>
 
 </template>
@@ -22,12 +22,18 @@
   })
 
   const isActive = computed(() => active.value.split('/').pop() === props.id)
-  let isInitialized = false
-  watch(isActive, () => { if (isActive.value&& !isInitialized) init() })
+
+  const initCtr = ref(0)
+  const qid = ref()
+
+  watch(isActive, () => { if (entity.value.id !== qid.value && isActive.value) init() })
+  watch(entity, () => { if (entity.value.id !== qid.value && isActive.value) init() })
 
   function init() {
-    // Do init processing
-    isInitialized = true
+    // Do expensive processing
+    console.log(`init ${props.id}`)
+    qid.value = entity.value.id
+    ++initCtr.value
   }
 
 </script>

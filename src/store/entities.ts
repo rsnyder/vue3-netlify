@@ -1,5 +1,6 @@
-import { toRaw } from 'vue'
 import { defineStore } from 'pinia'
+import { toRaw } from 'vue'
+import { findQids, langLabels } from '../utils'
 
 type Entity = {
   id: string,
@@ -48,7 +49,7 @@ export const useEntitiesStore = defineStore('entities', {
           Object.values(result.entities).forEach((entity:any) => entity.summaryText = {})
           this.entityData = {...this.entityData, ...result.entities}
           let labelUpdates = {}
-          findQids(result.entities[qid]).forEach(eid => { 
+          findQids(result.entities[qid].claims).forEach(eid => { 
             if (!this.allLabels[eid]) labelUpdates[eid] = {}
             if (eid[0] === 'P' && !this.urlformatters[eid]) this.urlformatters[eid] = undefined
           })
@@ -56,6 +57,7 @@ export const useEntitiesStore = defineStore('entities', {
             this.allLabels = {...this.allLabels, ...labelUpdates}
             this.updateLabels()
           }
+          this.updateUrlformatters()
         } catch (err) {
           console.error('Error loading entities:', err)
         }
@@ -129,7 +131,7 @@ export const useEntitiesStore = defineStore('entities', {
     async updateUrlformatters() {
       if (!this.urlformattersFetching) {
         let qids = Object.keys(this.urlformatters).filter((pid: string) => this.urlformatters[pid] === undefined)
-        // console.log(`updateUrlformatters: qids=${qids.length}`)
+        console.log(`updateUrlformatters: qids=${qids.length}`)
         if (qids.length > 0) {
           this.urlformattersFetching = true
           let values = qids.map(pid => `(<http://www.wikidata.org/entity/${pid}>)`).join(' ')
@@ -181,51 +183,3 @@ export const useEntitiesStore = defineStore('entities', {
 
   }
 })
-
-function findQids(entity:any) {
-  let qids = new Set([entity.id])
-  Object.entries(entity.claims).forEach((args: any) => {
-    qids.add(args[0])
-    args[1].forEach((val: any) => {
-      if (val.mainsnak.snaktype === 'value') {
-        if (val.mainsnak.datatype === 'wikibase-item') qids.add(val.mainsnak.datavalue.value.id)
-        if (val.mainsnak.datatype === 'wikibase-property') qids.add(val.mainsnak.datavalue.value.id)
-        if (val.mainsnak.datatype === 'quantity') qids.add(val.mainsnak.datavalue.value.unit.split('/').pop())
-      }
-      
-      if (val.qualifiers) {
-        Object.values(val.qualifiers).forEach((qvals: any) => {
-          qvals.forEach((qval: any) => {
-            qids.add(qval.property)
-            if (qval.snaktype === 'value') {
-              if (qval.datatype === 'wikibase-item') qids.add(qval.datavalue.value.id)
-              if (qval.datatype === 'quantity') qids.add(qval.datavalue.value.unit.split('/').pop())
-            }
-          })
-        })
-      }
-      if (val.references) {
-        val.references.forEach((ref: any) => {
-          Object.values(ref.snaks).forEach((rs: any) => {
-            Object.values(rs).forEach((rval: any) => {
-              qids.add(rval.property)
-              if (rval.snaktype === 'value') {
-                if (rval.datatype === 'wikibase-item') qids.add(rval.datavalue.value.id)
-                if (rval.datatype === 'quantity') qids.add(rval.datavalue.value.unit.split('/').pop())
-              }
-            })
-          })
-        })
-      }
-    })
-
-  })
-  // console.log(`findQids=${entity.id} qids=${qids.size} elapsed=${Math.round(performance.now() - start)}ms`)
-  return Array.from(qids)
-}
-
-function langLabels(labels:any, language:string) {
-  return Object.fromEntries(
-    Object.keys(labels)
-    .map(eid => [eid, labels[eid][language] || labels[eid]['en'] || '']))
-}
