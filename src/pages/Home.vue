@@ -2,6 +2,7 @@
 
   <div ref="root">
     <toolbar></toolbar>
+    <ve-markdown></ve-markdown>
   </div>
   
   </template>

@@ -16,6 +16,7 @@ import EntityCard from './components/EntityCard.ce.vue'
 import EntityHeader from './components/EntityHeader.ce.vue'
 import EntityInfoboxes from './components/EntityInfoboxes.ce.vue'
 import LanguageSelector from './components/LanguageSelector.ce.vue'
+import Markdown from './components/Markdown.ce.vue'
 import Referencing from './components/Referencing.ce.vue'
 import Sites from './components/Sites.ce.vue'
 import Statements from './components/Statements.ce.vue'
@@ -29,6 +30,7 @@ customElements.define('ve-entity-card', defineCustomElement(EntityCard))
 customElements.define('ve-entity-header', defineCustomElement(EntityHeader))
 customElements.define('ve-entity-infoboxes', defineCustomElement(EntityInfoboxes))
 customElements.define('ve-language-selector', defineCustomElement(LanguageSelector))
+customElements.define('ve-markdown', defineCustomElement(Markdown))
 customElements.define('ve-referencing', defineCustomElement(Referencing))
 customElements.define('ve-sites', defineCustomElement(Sites))
 customElements.define('ve-statements', defineCustomElement(Statements))
