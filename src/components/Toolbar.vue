@@ -1,7 +1,7 @@
 <template>
 
   <div class="main">
-    <div>
+    <div @click="onclick">
       Header
     </div>
     <ve-wikidata-search></ve-wikidata-search>
@@ -10,6 +10,27 @@
   </div>
   
 </template>
+
+<script setup lang="ts">
+
+  import { storeToRefs } from 'pinia'
+  import { useEntitiesStore } from '../store/entities'
+  import { useRouter } from 'vue-router'
+  const router = useRouter()
+
+  const store = useEntitiesStore()
+
+  const { language } = storeToRefs(store)
+
+  function onclick(e:MouseEvent) {
+    console.log('onclick', e)
+    store.setQid(null)
+    let options:any = { name: 'home', params: {} }
+    if (language.value !== 'en') options.query = { lang: language.value }
+    router.push(options)
+  }
+
+</script>
 
 <style>
 

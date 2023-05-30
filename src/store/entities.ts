@@ -72,7 +72,7 @@ export const useEntitiesStore = defineStore('entities', {
         if (this.entityData[qid]) {
           this.entity = this.setEntityForLanguage(this.qid, this.language, this.entityData)
           this.updateLabels()
-        } else {
+        } else if (qid) {
           this.fetch(qid)
         }
       }

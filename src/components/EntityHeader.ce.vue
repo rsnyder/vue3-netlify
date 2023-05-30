@@ -22,13 +22,7 @@
         </div>
       </div>
       
-      <div v-if="thumbnail" class="image" :style="{
-        'background-image': 'url(' + thumbnail + ')',
-        'background-size': 'contain',
-        'background-position': 'center',
-        'background-repeat': 'no-repeat'
-      }">
-      </div>
+      <div v-if="backgroundImage" class="image" :style="{backgroundImage}"></div>
 
     </div> <!-- card -->
 
@@ -36,7 +30,7 @@
 
 <script setup lang="ts">
 
-  import { computed, toRaw, watch } from 'vue'
+  import { computed, onMounted, ref, toRaw, watch } from 'vue'
   import {Md5} from 'ts-md5'
 
   import { useEntitiesStore } from '../store/entities'
@@ -44,10 +38,7 @@
   const store = useEntitiesStore()
   const { entity } = storeToRefs(store)
 
-  // watch(entity, () => console.log('entity', toRaw(entity.value)))
-
-  const image = computed(() => entity.value.claims && entity.value.claims.P18 && entity.value.claims.P18[0].mainsnak.datavalue.value)
-  const thumbnail = computed(() => image.value ? mwImage(image.value, 500) : null)
+  watch(entity, () => setBackgroundImage())
 
   const wikipedia = computed(() => entity.value.sitelinks )
   const wikidataUrl = computed(() =>  `https://www.wikidata.org/entity/${entity.value.id}` )
@@ -55,10 +46,23 @@
   const wikiquoteUrl = computed(() =>  '' )
   const wikivoyageUrl = computed(() =>  '' )
   const summaryText = computed(() => entity.value.summaryText)
+  const backgroundImage = ref<string>()
+
+  onMounted(() => setBackgroundImage())
+
+  function setBackgroundImage() {
+    let commonsImageFile = entity.value.claims?.P18 ? entity.value.claims.P18[0].mainsnak.datavalue.value : null
+    if (commonsImageFile) backgroundImage.value = `url('${encodeUrl(mwImage(commonsImageFile, 500))}')`
+  }
+
+  function encodeUrl(url:string) {
+    let parts = url.split('/')
+    let encoded = `${parts.slice(0,-1).join('/')}/${encodeURIComponent(parts[parts.length-1])}`
+    return encoded
+  }
 
   function mwImage(mwImg: string, width: number) {
     // Converts Wikimedia commons image URL to a thumbnail link
-    mwImg = (Array.isArray(mwImg) ? mwImg[0] : mwImg).replace(/Special:FilePath\//, 'File:').split('File:').pop()
     mwImg = decodeURIComponent(mwImg).replace(/ /g,'_')
     const _md5 = Md5.hashStr(mwImg)
     const extension = mwImg.split('.').pop()
@@ -96,6 +100,9 @@
 
   .image {
     grid-area: image;
+    background-size: contain;
+    background-position: center;
+    background-repeat: no-repeat;
   }
 
   .label {

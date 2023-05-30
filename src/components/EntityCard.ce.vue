@@ -1,9 +1,10 @@
 <template>
 
-  <div ref="root" id="card" class="card">
+  <div ref="root" id="card" class="card" @click="onclick">
+    <div v-if="backgroundImage" class="image" :style="{backgroundImage}"></div>
     <div class="label" v-html="label"></div>
     <div class="description" v-html="description"></div>
-    <div v-if="backgroundImage" class="image" :style="{backgroundImage, width: thumbnailWidth}"></div>
+    <div v-if="summaryText" class="summary" v-html="summaryText"></div>
     <div class="links">
       <span v-if="wikipediaLink" class="logo" title="Wikipedia">
         <a target="_blank" :href="wikipediaLink">
@@ -11,7 +12,6 @@
         </a>
       </span>
     </div>
-    <p v-if="summaryText" class="summary" v-html="summaryText"></p>
   </div>
 
 </template>
@@ -53,7 +53,7 @@
 
   const thumbnailWidth = computed(() => `${host.value.clientWidth * .33}px`)
 
-  watch(backgroundImage, () => host.value.style.width = '600px')
+  // watch(backgroundImage, () => host.value.style.width = '600px')
 
   onMounted(() => {
     applyProps()
@@ -66,7 +66,8 @@
     if (props.image) backgroundImage.value = props.image
   }
 
-  watch(entity, () => { 
+  watch(entity, () => {
+    // console.log(toRaw(entity.value))
     label.value = entity.value.label
     description.value = entity.value.description
     let commonsImageFile = entity.value.claims.P18 ? entity.value.claims.P18[0].mainsnak.datavalue.value : null
@@ -133,6 +134,10 @@
     return url
   }
 
+  function onclick(e:MouseEvent) {
+    store.setQid(qid.value)
+  }
+
 </script>
 
 <style>
@@ -145,14 +150,15 @@
   }
 
   .card {
-    display: grid;
-    grid-template-columns: 1fr auto;
-    grid-template-rows: auto auto auto 1fr auto;
-    border: 1px solid #444;
-    border-radius: 6px;
+    display: flex;
+    flex-direction: column;
+    border: 1px solid #ddd;
+    border-radius: 3px;
     /* min-height: 150px; */
     background-color: white;
     box-shadow: rgba(50, 50, 93, 0.25) 0px 6px 12px -2px, rgba(0, 0, 0, 0.3) 0px 3px 7px -3px;
+    height: 100%;
+    cursor: pointer;
   }
 
   .label, .description, .summary, .links {
@@ -161,25 +167,26 @@
   }
 
   .label {
-    grid-area: 1 / 1 / 2 / 2;
     font-size: 130%;
     font-weight: bold;
   }
 
   .description {
-    grid-area: 2 / 1 / 3 / 2;
     font-size: 110%;
     font-weight: 400;
  }
 
   .summary {
-    grid-area: 3 / 1 / 4 / 2;
     display: -webkit-box;
     -webkit-box-orient: vertical;
     -webkit-line-clamp: 6;
     overflow: hidden;
     line-height: 1.2rem;
     font-weight: 300;
+  }
+
+  .summary p {
+    margin: 0 0 6px 0;
   }
 
   .spacer {
@@ -192,9 +199,9 @@
   }
 
   .image {
-    grid-area: 1 / 2 / 6 / 3;
-    height: 100%;
-    object-fit: cover;
+    height: 200px;
+    width: 100%;
+    object-fit: contain;
     background-repeat: no-repeat;
     background-size: contain;
     background-position: center;
