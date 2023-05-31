@@ -4,9 +4,10 @@ export function findQids(claims:any): string[] {
     qids.add(args[0])
     args[1].forEach((val: any) => {
       if (val.mainsnak.snaktype === 'value') {
-        if (val.mainsnak.datatype === 'wikibase-item') qids.add(val.mainsnak.datavalue.value.id)
-        if (val.mainsnak.datatype === 'wikibase-property') qids.add(val.mainsnak.datavalue.value.id)
-        if (val.mainsnak.datatype === 'quantity') qids.add(val.mainsnak.datavalue.value.unit.split('/').pop())
+        if (val.mainsnak.datavalue?.type === 'wikibase-entityid') qids.add(val.mainsnak.datavalue.value.id)
+        else if (val.mainsnak.datavalue?.type === 'wikibase-property') qids.add(val.mainsnak.datavalue.value.id)
+        else if (val.mainsnak.datavalue?.type === 'quantity') qids.add(val.mainsnak.datavalue.value.unit.split('/').pop())
+        else console.log(val.mainsnak.datavalue?.type)
       }
       
       if (val.qualifiers) {
@@ -14,8 +15,8 @@ export function findQids(claims:any): string[] {
           qvals.forEach((qval: any) => {
             qids.add(qval.property)
             if (qval.snaktype === 'value') {
-              if (qval.datatype === 'wikibase-item') qids.add(qval.datavalue.value.id)
-              if (qval.datatype === 'quantity') qids.add(qval.datavalue.value.unit.split('/').pop())
+              if (qval.datavalue?.type === 'wikibase-entityid') qids.add(qval.datavalue.value.id)
+              if (qval.datavalue?.type === 'quantity') qids.add(qval.datavalue.value.unit.split('/').pop())
             }
           })
         })
@@ -26,8 +27,8 @@ export function findQids(claims:any): string[] {
             Object.values(rs).forEach((rval: any) => {
               qids.add(rval.property)
               if (rval.snaktype === 'value') {
-                if (rval.datatype === 'wikibase-item') qids.add(rval.datavalue.value.id)
-                if (rval.datatype === 'quantity') qids.add(rval.datavalue.value.unit.split('/').pop())
+                if (rval.datavalue?.type === 'wikibase-entityid') qids.add(rval.datavalue.value.id)
+                if (rval.datavalue?.type === 'quantity') qids.add(rval.datavalue.value.unit.split('/').pop())
               }
             })
           })

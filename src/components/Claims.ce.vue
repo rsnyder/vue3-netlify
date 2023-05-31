@@ -8,7 +8,7 @@
           <div class="prop-label">
             <a :href="`https://www.wikidata.org/wiki/Property:${pid}`" 
                v-html="labels[pid]"
-               :data-type="vals[0].mainsnak.snaktype == 'value' ? vals[0].mainsnak.datatype : ''"
+               :data-type="vals[0].mainsnak.snaktype == 'value' ? vals[0].mainsnak.datavalue?.type : ''"
                target="_blank"
             ></a>
           </div>
@@ -31,34 +31,34 @@
 
                   <!-- Property -->
                   <template v-if="pval.mainsnak.snaktype == 'value'">
-                    <template v-if="pval.mainsnak.datatype === 'wikibase-item'">
-                      <span class="prop-value wikibase-item" v-html="labels[pval.mainsnak.datavalue.value.id]" 
+                    <template v-if="pval.mainsnak.datavalue?.type === 'wikibase-entityid'">
+                      <span class="prop-value wikibase-entityid" v-html="labels[pval.mainsnak.datavalue.value.id]" 
                             :id="`prop-${pid}-${idx}-${pval.mainsnak.datavalue.value.id}`" :data-qid="pval.mainsnak.datavalue.value.id" 
                             @click="entitySelected">
                       </span>
                       <!-- <span v-if="descriptions[pval.mainsnak.datavalue.value.id]" class="description" v-html="description(pval.mainsnak.datavalue.value.id)"></span> -->
                     </template>
-                    <span v-else-if="pval.mainsnak.datatype === 'wikibase-property'" :class="`prop-value ${pval.mainsnak.datatype}`">
+                    <span v-else-if="pval.mainsnak.datavalue?.type === 'wikibase-property'" :class="`prop-value ${pval.mainsnak.datavalue?.type}`">
                       <a :href="`http://www.wikidata.org/entity/${pval.mainsnak.datavalue.value.id}`" target="_blank" v-html="`${labels[pval.mainsnak.datavalue.value.id]} (${pval.mainsnak.datavalue.value.id})`"></a>
                     </span>
-                    <span v-else-if="pval.mainsnak.datatype === 'quantity'" :class="`prop-value ${pval.mainsnak.datatype}`" v-html="quantity(pval.mainsnak.datavalue.value)"></span>
-                    <span v-else-if="pval.mainsnak.datatype === 'time'" :class="`prop-value ${pval.mainsnak.datatype}`" v-html="formattedTime(pval.mainsnak.datavalue.value)"></span>
-                    <template v-else-if="pval.mainsnak.datatype === 'monolingualtext'">
-                      <span v-if="pval.mainsnak.datavalue.value.language === language" :class="`prop-value ${pval.mainsnak.datatype}`" v-html="`${pval.mainsnak.datavalue.value.text}`"></span>
+                    <span v-else-if="pval.mainsnak.datavalue?.type === 'quantity'" :class="`prop-value ${pval.mainsnak.datavalue?.type}`" v-html="quantity(pval.mainsnak.datavalue.value)"></span>
+                    <span v-else-if="pval.mainsnak.datavalue?.type === 'time'" :class="`prop-value ${pval.mainsnak.datavalue?.type}`" v-html="formattedTime(pval.mainsnak.datavalue.value)"></span>
+                    <template v-else-if="pval.mainsnak.datavalue?.type === 'monolingualtext'">
+                      <span v-if="pval.mainsnak.datavalue.value.language === language" :class="`prop-value ${pval.mainsnak.datavalue?.type}`" v-html="`${pval.mainsnak.datavalue.value.text}`"></span>
                     </template>
-                    <template v-else-if="pval.mainsnak.datatype === 'commonsMedia' && commonsMediaImageMime(pval.mainsnak.datavalue.value)">
+                    <template v-else-if="pval.mainsnak.datavalue?.type === 'commonsMedia' && commonsMediaImageMime(pval.mainsnak.datavalue.value)">
                       <a :href="`https://commons.wikimedia.org/wiki/File:${pval.mainsnak.datavalue.value}`" target="_blank">
-                        <img :class="`prop-value ${pval.mainsnak.datatype}`" :src="`https://commons.wikimedia.org/w/thumb.php?f=${encodeURIComponent(pval.mainsnak.datavalue.value)}&w=200`">
+                        <img :class="`prop-value ${pval.mainsnak.datavalue?.type}`" :src="`https://commons.wikimedia.org/w/thumb.php?f=${encodeURIComponent(pval.mainsnak.datavalue.value)}&w=200`">
                       </a>              
                       <br/><a :href="`https://commons.wikimedia.org/wiki/File:${pval.mainsnak.datavalue.value}`" target="_blank" v-html="pval.mainsnak.datavalue.value"></a>              
                     </template>
-                    <audio v-else-if="pval.mainsnak.datatype === 'commonsMedia' && commonsMediaAudioMime(pval.mainsnak.datavalue.value)" :class="`prop-value ${pval.mainsnak.datatype}`" controls>
+                    <audio v-else-if="pval.mainsnak.datavalue?.type === 'commonsMedia' && commonsMediaAudioMime(pval.mainsnak.datavalue.value)" :class="`prop-value ${pval.mainsnak.datavalue?.type}`" controls>
                       <source :src="commonsURL(pval.mainsnak.datavalue.value)" :type="commonsMediaAudioMime(pval.mainsnak.datavalue.value)">
                     </audio>
-                    <a v-else-if="pval.mainsnak.datatype === 'url'" :class="`prop-value ${pval.mainsnak.datatype}`" :href="pval.mainsnak.datavalue.value" v-html="pval.mainsnak.datavalue.value" target="_blank"></a>
-                    <a v-else-if="pval.mainsnak.datatype === 'external-id'" :class="`prop-value ${pval.mainsnak.datatype}`" v-html="pval.mainsnak.datavalue.value" :href="formatURL(pval.mainsnak.datavalue.value, pid)" target="_blank"></a>
-                    <a v-else-if="pval.mainsnak.datatype === 'globe-coordinate'" :class="`prop-value ${pval.mainsnak.datatype}`" v-html="coords(pval.mainsnak.datavalue.value)" target="_blank"></a>
-                    <span v-else :class="`prop-value ${pval.mainsnak.datatype}`" v-html="pval.mainsnak.datavalue.value"></span>
+                    <a v-else-if="pval.mainsnak.datavalue?.type === 'url'" :class="`prop-value ${pval.mainsnak.datavalue?.type}`" :href="pval.mainsnak.datavalue.value" v-html="pval.mainsnak.datavalue.value" target="_blank"></a>
+                    <a v-else-if="pval.mainsnak.datavalue?.type === 'external-id'" :class="`prop-value ${pval.mainsnak.datavalue?.type}`" v-html="pval.mainsnak.datavalue.value" :href="formatURL(pval.mainsnak.datavalue.value, pid)" target="_blank"></a>
+                    <a v-else-if="pval.mainsnak.datavalue?.type === 'globecoordinate'" :class="`prop-value ${pval.mainsnak.datavalue?.type}`" v-html="coords(pval.mainsnak.datavalue.value)" target="_blank"></a>
+                    <span v-else :class="`prop-value ${pval.mainsnak.datavalue?.type}`" v-html="pval.mainsnak.datavalue.value"></span>
                   </template>
 
                   <!-- qualifiers -->
@@ -66,25 +66,25 @@
                     <a class="prop-label" v-html="labels[pid] || pid" :href="`https://www.wikidata.org/wiki/Property:${pid}`"></a>:
                     <template v-for="(val, vidx) in values">
                       <template v-if="val.snaktype == 'value'">
-                        <template v-if="val.datatype === 'wikibase-item'">
-                          <span :class="`prop-value ${val.datatype}`" :key="`qual-${pid}-${vidx}`" v-html="labels[val.datavalue.value.id] || val.datavalue.value.id"
+                        <template v-if="val.datavalue?.type === 'wikibase-entityid'">
+                          <span :class="`prop-value ${val.datavalue?.type}`" :key="`qual-${pid}-${vidx}`" v-html="labels[val.datavalue.value.id] || val.datavalue.value.id"
                                 :id="`qual-${pid}-${val.datavalue.value.id}`" :data-qid="val.datavalue.value.id" 
                                 @click="entitySelected">
                           </span>
                         </template>
-                        <span v-else-if="val.datatype === 'quantity'" :class="`prop-value ${val.datatype}`" v-html="quantity(val.datavalue.value)"></span>
-                        <span v-else-if="val.datatype === 'time'" :class="`prop-value ${val.datatype}`" v-html="formattedTime(val.datavalue.value)"></span>
-                        <template v-else-if="val.datatype === 'monolingualtext'">
-                          <span v-if="val.datavalue.value.language === language" :class="`prop-value ${val.datatype}`" v-html="`${val.datavalue.value.text}`"></span>
+                        <span v-else-if="val.datavalue?.type === 'quantity'" :class="`prop-value ${val.datavalue?.type}`" v-html="quantity(val.datavalue.value)"></span>
+                        <span v-else-if="val.datavalue?.type === 'time'" :class="`prop-value ${val.datavalue?.type}`" v-html="formattedTime(val.datavalue.value)"></span>
+                        <template v-else-if="val.datavalue?.type === 'monolingualtext'">
+                          <span v-if="val.datavalue.value.language === language" :class="`prop-value ${val.datavalue?.type}`" v-html="`${val.datavalue.value.text}`"></span>
                         </template>
-                        <img v-else-if="val.datatype === 'commonsMedia' && commonsMediaImageMime(val.datavalue.value)" :class="`prop-value ${val.datatype}`" :src="`https://commons.wikimedia.org/w/thumb.php?f=${encodeURIComponent(val.datavalue.value)}&w=200`">                    
-                        <audio v-else-if="val.datatype === 'commonsMedia' && commonsMediaAudioMime(val.datavalue.value)" :class="`prop-value ${val.datatype}`" controls>
+                        <img v-else-if="val.datavalue?.type === 'commonsMedia' && commonsMediaImageMime(val.datavalue.value)" :class="`prop-value ${val.datavalue?.type}`" :src="`https://commons.wikimedia.org/w/thumb.php?f=${encodeURIComponent(val.datavalue.value)}&w=200`">                    
+                        <audio v-else-if="val.datavalue?.type === 'commonsMedia' && commonsMediaAudioMime(val.datavalue.value)" :class="`prop-value ${val.datavalue?.type}`" controls>
                           <source :src="commonsURL(val.datavalue.value)" :type="commonsMediaAudioMime(val.datavalue.value)">
                         </audio>
-                        <a v-else-if="val.datatype === 'url'" :class="`prop-value ${val.datatype}`" :href="val.datavalue.value" v-html="val.datavalue.value" target="_blank"></a>
-                        <a v-else-if="val.datatype === 'external-id'" :class="`prop-value ${val.datatype}`" v-html="val.datavalue.value" :href="formatURL(val.datavalue.value, pid)" target="_blank"></a>
-                        <a v-else-if="val.datatype === 'globe-coordinate'" :class="`prop-value ${val.datatype}`" v-html="coords(val.datavalue.value)" target="_blank"></a>
-                        <span v-else :class="`prop-value ${val.datatype}`" v-html="val.datavalue.value"></span>
+                        <a v-else-if="val.datavalue?.type === 'url'" :class="`prop-value ${val.datavalue?.type}`" :href="val.datavalue.value" v-html="val.datavalue.value" target="_blank"></a>
+                        <a v-else-if="val.datavalue?.type === 'external-id'" :class="`prop-value ${val.datavalue?.type}`" v-html="val.datavalue.value" :href="formatURL(val.datavalue.value, pid)" target="_blank"></a>
+                        <a v-else-if="val.datavalue?.type === 'globecoordinate'" :class="`prop-value ${val.datavalue?.type}`" v-html="coords(val.datavalue.value)" target="_blank"></a>
+                        <span v-else :class="`prop-value ${val.datavalue?.type}`" v-html="val.datavalue.value"></span>
                       </template>
                     </template>
                   </div>
@@ -102,27 +102,29 @@
                           <div v-for="(values, pid, pidx) in reference.snaks" :key="`r${ridx}-${pidx}`">
                             <a class="prop-label" v-html="labels[pid] || pid" :href="`https://www.wikidata.org/wiki/Property:${pid}`"></a>:
                             <template v-for="(val, idx) in values">
+                              
                               <template v-if="val.snaktype == 'value'">
-                                <template v-if="val.datatype === 'wikibase-item'">
-                                  <span :class="`prop-value ${val.datatype}`" :key="`r${ridx}-${pidx}-${idx}`" v-html="labels[val.datavalue.value.id] || val.datavalue.value.id"
+                              
+                                <template v-if="val.datavalue?.type === 'wikibase-entityid'">
+                                  <span :class="`prop-value ${val.datavalue?.type}`" :key="`r${ridx}-${pidx}-${idx}`" v-html="labels[val.datavalue.value.id] || val.datavalue.value.id"
                                         :id="`r${ridx}-${pidx}-${val.datavalue.value.id}`" :data-qid="val.datavalue.value.id"
                                         @click="entitySelected">
                                   </span>
                                   <!-- <span v-if="descriptions[val.datavalue.value.id]" class="description" v-html="description(val.datavalue.value.id)"></span> -->
                                 </template>
-                                <span v-else-if="val.datatype === 'quantity'" :class="`prop-value ${val.datatype}`" v-html="quantity(val.datavalue.value)"></span>
-                                <span v-else-if="val.datatype === 'time'" :class="`prop-value ${val.datatype}`" v-html="formattedTime(val.datavalue.value)"></span>
-                                <template v-else-if="val.datatype === 'monolingualtext'">
-                                  <span v-if="val.datavalue.value.language === language" :class="`prop-value ${val.datatype}`" v-html="`${val.datavalue.value.text}`"></span>
+                                <span v-else-if="val.datavalue?.type === 'quantity'" :class="`prop-value ${val.datavalue?.type}`" v-html="quantity(val.datavalue.value)"></span>
+                                <span v-else-if="val.datavalue?.type === 'time'" :class="`prop-value ${val.datavalue?.type}`" v-html="formattedTime(val.datavalue.value)"></span>
+                                <template v-else-if="val.datavalue?.type === 'monolingualtext'">
+                                  <span v-if="val.datavalue.value.language === language" :class="`prop-value ${val.datavalue?.type}`" v-html="`${val.datavalue.value.text}`"></span>
                                 </template>
-                                <img v-else-if="val.datatype === 'commonsMedia' && commonsMediaImageMime(val.datavalue.value)" :class="`prop-value ${val.datatype}`" :src="`https://commons.wikimedia.org/w/thumb.php?f=${encodeURIComponent(val.datavalue.value)}&w=200`">                    
-                                <audio v-else-if="val.datatype === 'commonsMedia' && commonsMediaAudioMime(val.datavalue.value)" :class="`prop-value ${val.datatype}`" controls>
+                                <img v-else-if="val.datavalue?.type === 'commonsMedia' && commonsMediaImageMime(val.datavalue.value)" :class="`prop-value ${val.datavalue?.type}`" :src="`https://commons.wikimedia.org/w/thumb.php?f=${encodeURIComponent(val.datavalue.value)}&w=200`">                    
+                                <audio v-else-if="val.datavalue?.type === 'commonsMedia' && commonsMediaAudioMime(val.datavalue.value)" :class="`prop-value ${val.datavalue?.type}`" controls>
                                   <source :src="commonsURL(val.datavalue.value)" :type="commonsMediaAudioMime(val.datavalue.value)">
                                 </audio>
-                                <a v-else-if="val.datatype === 'url'" :class="`prop-value ${val.datatype}`" :href="val.datavalue.value" v-html="val.datavalue.value" target="_blank"></a>
-                                <a v-else-if="val.datatype === 'external-id'" :class="`prop-value ${val.datatype}`" v-html="val.datavalue.value" :href="formatURL(val.datavalue.value, pid)" target="_blank"></a>
-                                <a v-else-if="val.datatype === 'globe-coordinate'" :class="`prop-value ${val.datatype}`" v-html="coords(val.datavalue.value)" target="_blank"></a>
-                                <span v-else :class="`prop-value ${val.datatype}`" v-html="val.datavalue.value"></span>
+                                <a v-else-if="val.datavalue?.type === 'url'" :class="`prop-value ${val.datavalue?.type}`" :href="val.datavalue.value" v-html="val.datavalue.value" target="_blank"></a>
+                                <a v-else-if="val.datavalue?.type === 'external-id'" :class="`prop-value ${val.datavalue?.type}`" v-html="val.datavalue.value" :href="formatURL(val.datavalue.value, pid)" target="_blank"></a>
+                                <a v-else-if="val.datavalue?.type === 'globecoordinate'" :class="`prop-value ${val.datavalue?.type}`" v-html="coords(val.datavalue.value)" target="_blank"></a>
+                                <span v-else :class="`prop-value ${val.datavalue?.type}`" v-html="val.datavalue.value"></span>
                               </template>
                             </template>
                           </div>
@@ -138,39 +140,49 @@
           </template>
 
           <template v-else>
-
             <div v-for="(pval, idx) in entity.claims[pid]" :key="`prop-${pid}-${idx}`">
 
               <!-- Property -->
               <template v-if="pval.mainsnak.snaktype == 'value'">
-                <template v-if="pval.mainsnak.datatype === 'wikibase-item'">
-                  <span :class="`prop-value ${pval.mainsnak.datatype}`" v-html="labels[pval.mainsnak.datavalue.value.id] || pval.mainsnak.datavalue.value.id"
+                
+                <template v-if="pval.mainsnak.datavalue?.type === 'wikibase-entityid'">
+                  <span :class="`prop-value ${pval.mainsnak.datavalue?.type}`" v-html="labels[pval.mainsnak.datavalue.value.id] || pval.mainsnak.datavalue.value.id"
                         :id="`prop-${pid}-${idx}-${pval.mainsnak.datavalue.value.id}`" :data-qid="pval.mainsnak.datavalue.value.id" 
                         @click="entitySelected">
                   </span>
                   <!-- <span v-if="descriptions[pval.mainsnak.datavalue.value.id]" class="description" v-html="description(pval.mainsnak.datavalue.value.id)"></span> -->
                 </template>
-                <span v-else-if="pval.mainsnak.datatype === 'wikibase-property'" :class="`prop-value ${pval.mainsnak.datatype}`">
+                
+                <span v-else-if="pval.mainsnak.datavalue?.type === 'wikibase-property'" :class="`prop-value ${pval.mainsnak.datavalue?.type}`">
                   <a :href="`http://www.wikidata.org/entity/${pval.mainsnak.datavalue.value.id}`" target="_blank" v-html="`${labels[pval.mainsnak.datavalue.value.id]} (${pval.mainsnak.datavalue.value.id})`"></a>
                 </span>
-                <span v-else-if="pval.mainsnak.datatype === 'quantity'" :class="`prop-value ${pval.mainsnak.datatype}`" v-html="quantity(pval.mainsnak.datavalue.value)"></span>
-                <span v-else-if="pval.mainsnak.datatype === 'time'" :class="`prop-value ${pval.mainsnak.datatype}`" v-html="formattedTime(pval.mainsnak.datavalue.value)"></span>
-                <template v-else-if="pval.mainsnak.datatype === 'monolingualtext'">
-                  <span v-if="pval.mainsnak.datavalue.value.language === language" :class="`prop-value ${pval.mainsnak.datatype}`" v-html="`${pval.mainsnak.datavalue.value.text}`"></span>
+                
+                <span v-else-if="pval.mainsnak.datavalue?.type === 'quantity'" :class="`prop-value ${pval.mainsnak.datavalue?.type}`" v-html="quantity(pval.mainsnak.datavalue.value)"></span>
+                
+                <span v-else-if="pval.mainsnak.datavalue?.type === 'time'" :class="`prop-value ${pval.mainsnak.datavalue?.type}`" v-html="formattedTime(pval.mainsnak.datavalue.value)"></span>
+                
+                <template v-else-if="pval.mainsnak.datavalue?.type === 'monolingualtext'">
+                  <span v-if="pval.mainsnak.datavalue.value.language === language" :class="`prop-value ${pval.mainsnak.datavalue?.type}`" v-html="`${pval.mainsnak.datavalue.value.text}`"></span>
                 </template>
-                <template v-else-if="pval.mainsnak.datatype === 'commonsMedia' && commonsMediaImageMime(pval.mainsnak.datavalue.value)">
+                
+                <template v-else-if="pval.mainsnak.datavalue?.type === 'commonsMedia' && commonsMediaImageMime(pval.mainsnak.datavalue.value)">
                   <a :href="`https://commons.wikimedia.org/wiki/File:${pval.mainsnak.datavalue.value}`" target="_blank">
-                    <img :class="`prop-value ${pval.mainsnak.datatype}`" :src="`https://commons.wikimedia.org/w/thumb.php?f=${encodeURIComponent(pval.mainsnak.datavalue.value)}&w=200`">
+                    <img :class="`prop-value ${pval.mainsnak.datavalue?.type}`" :src="`https://commons.wikimedia.org/w/thumb.php?f=${encodeURIComponent(pval.mainsnak.datavalue.value)}&w=200`">
                   </a>              
                   <br/><a :href="`https://commons.wikimedia.org/wiki/File:${pval.mainsnak.datavalue.value}`" target="_blank" v-html="pval.mainsnak.datavalue.value"></a>              
                 </template>
-                <audio v-else-if="pval.mainsnak.datatype === 'commonsMedia' && commonsMediaAudioMime(pval.mainsnak.datavalue.value)" :class="`prop-value ${pval.mainsnak.datatype}`" controls>
+                
+                <audio v-else-if="pval.mainsnak.datavalue?.type === 'commonsMedia' && commonsMediaAudioMime(pval.mainsnak.datavalue.value)" :class="`prop-value ${pval.mainsnak.datavalue?.type}`" controls>
                   <source :src="commonsURL(pval.mainsnak.datavalue.value)" :type="commonsMediaAudioMime(pval.mainsnak.datavalue.value)">
                 </audio>
-                <a v-else-if="pval.mainsnak.datatype === 'url'" :class="`prop-value ${pval.mainsnak.datatype}`" :href="pval.mainsnak.datavalue.value" v-html="pval.mainsnak.datavalue.value" target="_blank"></a>
-                <a v-else-if="pval.mainsnak.datatype === 'external-id'" :class="`prop-value ${pval.mainsnak.datatype}`" v-html="pval.mainsnak.datavalue.value" :href="formatURL(pval.mainsnak.datavalue.value, pid)" target="_blank"></a>
-                <a v-else-if="pval.mainsnak.datatype === 'globe-coordinate'" :class="`prop-value ${pval.mainsnak.datatype}`" v-html="coords(pval.mainsnak.datavalue.value)" target="_blank"></a>
-                <span v-else :class="`prop-value ${pval.mainsnak.datatype}`" v-html="pval.mainsnak.datavalue.value"></span>
+                
+                <a v-else-if="pval.mainsnak.datavalue?.type === 'url'" :class="`prop-value ${pval.mainsnak.datavalue?.type}`" :href="pval.mainsnak.datavalue.value" v-html="pval.mainsnak.datavalue.value" target="_blank"></a>
+                
+                <a v-else-if="pval.mainsnak.datavalue?.type === 'external-id'" :class="`prop-value ${pval.mainsnak.datavalue?.type}`" v-html="pval.mainsnak.datavalue.value" :href="formatURL(pval.mainsnak.datavalue.value, pid)" target="_blank"></a>
+                
+                <a v-else-if="pval.mainsnak.datavalue?.type === 'globecoordinate'" :class="`prop-value ${pval.mainsnak.datavalue?.type}`" v-html="coords(pval.mainsnak.datavalue.value)" target="_blank"></a>
+                
+                <span v-else :class="`prop-value ${pval.mainsnak.datavalue?.type}`" v-html="pval.mainsnak.datavalue.value"></span>
               </template>
 
               <!-- qualifiers -->
@@ -178,26 +190,26 @@
                 <a class="prop-label" v-html="labels[pid] || pid" :href="`https://www.wikidata.org/wiki/Property:${pid}`"></a>:
                 <template v-for="(val, vidx) in values">
                   <template v-if="val.snaktype == 'value'">
-                    <template v-if="val.datatype === 'wikibase-item'">
-                      <span :class="`prop-value ${val.datatype}`" :key="`qual-${pid}-${vidx}`" v-html="labels[val.datavalue.value.id] || val.datavalue.value.id"
+                    <template v-if="val.datavalue?.type === 'wikibase-entityid'">
+                      <span :class="`prop-value ${val.datavalue?.type}`" :key="`qual-${pid}-${vidx}`" v-html="labels[val.datavalue.value.id] || val.datavalue.value.id"
                             :id="`qual-${pid}-${val.datavalue.value.id}`" :data-qid="val.datavalue.value.id" 
                             @click="entitySelected">
                       </span>
                       <!-- <span v-if="descriptions[val.datavalue.value.id]" class="description" v-html="description(val.datavalue.value.id)"></span> -->
                     </template>
-                    <span v-else-if="val.datatype === 'quantity'" :class="`prop-value ${val.datatype}`" v-html="quantity(val.datavalue.value)"></span>
-                    <span v-else-if="val.datatype === 'time'" :class="`prop-value ${val.datatype}`" v-html="formattedTime(val.datavalue.value)"></span>
-                    <template v-else-if="val.datatype === 'monolingualtext'">
-                      <span v-if="val.datavalue.value.language === language" :class="`prop-value ${val.datatype}`" v-html="`${val.datavalue.value.text}`"></span>
+                    <span v-else-if="val.datavalue?.type === 'quantity'" :class="`prop-value ${val.datavalue?.type}`" v-html="quantity(val.datavalue.value)"></span>
+                    <span v-else-if="val.datavalue?.type === 'time'" :class="`prop-value ${val.datavalue?.type}`" v-html="formattedTime(val.datavalue.value)"></span>
+                    <template v-else-if="val.datavalue?.type === 'monolingualtext'">
+                      <span v-if="val.datavalue.value.language === language" :class="`prop-value ${val.datavalue?.type}`" v-html="`${val.datavalue.value.text}`"></span>
                     </template>
-                    <img v-else-if="val.datatype === 'commonsMedia' && commonsMediaImageMime(val.datavalue.value)" :class="`prop-value ${val.datatype}`" :src="`https://commons.wikimedia.org/w/thumb.php?f=${encodeURIComponent(val.datavalue.value)}&w=200`">                    
-                    <audio v-else-if="val.datatype === 'commonsMedia' && commonsMediaAudioMime(val.datavalue.value)" :class="`prop-value ${val.datatype}`" controls>
+                    <img v-else-if="val.datavalue?.type === 'commonsMedia' && commonsMediaImageMime(val.datavalue.value)" :class="`prop-value ${val.datavalue?.type}`" :src="`https://commons.wikimedia.org/w/thumb.php?f=${encodeURIComponent(val.datavalue.value)}&w=200`">                    
+                    <audio v-else-if="val.datavalue?.type === 'commonsMedia' && commonsMediaAudioMime(val.datavalue.value)" :class="`prop-value ${val.datavalue?.type}`" controls>
                       <source :src="commonsURL(val.datavalue.value)" :type="commonsMediaAudioMime(val.datavalue.value)">
                     </audio>
-                    <a v-else-if="val.datatype === 'url'" :class="`prop-value ${val.datatype}`" :href="val.datavalue.value" v-html="val.datavalue.value" target="_blank"></a>
-                    <a v-else-if="val.datatype === 'external-id'" :class="`prop-value ${val.datatype}`" v-html="val.datavalue.value" :href="formatURL(val.datavalue.value, pid)" target="_blank"></a>
-                    <a v-else-if="val.datatype === 'globe-coordinate'" :class="`prop-value ${val.datatype}`" v-html="coords(val.datavalue.value)" target="_blank"></a>
-                    <span v-else :class="`prop-value ${val.datatype}`" v-html="val.datavalue.value"></span>
+                    <a v-else-if="val.datavalue?.type === 'url'" :class="`prop-value ${val.datavalue?.type}`" :href="val.datavalue.value" v-html="val.datavalue.value" target="_blank"></a>
+                    <a v-else-if="val.datavalue?.type === 'external-id'" :class="`prop-value ${val.datavalue?.type}`" v-html="val.datavalue.value" :href="formatURL(val.datavalue.value, pid)" target="_blank"></a>
+                    <a v-else-if="val.datavalue?.type === 'globecoordinate'" :class="`prop-value ${val.datavalue?.type}`" v-html="coords(val.datavalue.value)" target="_blank"></a>
+                    <span v-else :class="`prop-value ${val.datavalue?.type}`" v-html="val.datavalue.value"></span>
                   </template>
                 </template>
               </div>
@@ -216,26 +228,26 @@
                         <a class="prop-label" v-html="labels[pid] || pid" :href="`https://www.wikidata.org/wiki/Property:${pid}`"></a>:
                         <template v-for="(val, idx) in values">
                           <template v-if="val.snaktype == 'value'">
-                            <template v-if="val.datatype === 'wikibase-item'">
-                              <span :class="`prop-value ${val.datatype}`" :key="`r${ridx}-${pidx}-${idx}`" v-html="labels[val.datavalue.value.id] || val.datavalue.value.id"
+                            <template v-if="val.datavalue?.type === 'wikibase-entityid'">
+                              <span :class="`prop-value ${val.datavalue?.type}`" :key="`r${ridx}-${pidx}-${idx}`" v-html="labels[val.datavalue.value.id] || val.datavalue.value.id"
                                     :id="`r${ridx}-${pidx}-${val.datavalue.value.id}`" :data-qid="val.datavalue.value.id"
                                     @click="entitySelected">
                               </span>
                               <!-- <span v-if="descriptions[val.datavalue.value.id]" class="description" v-html="description(val.datavalue.value.id)"></span> -->
                             </template>
-                            <span v-else-if="val.datatype === 'quantity'" :class="`prop-value ${val.datatype}`" v-html="quantity(val.datavalue.value)"></span>
-                            <span v-else-if="val.datatype === 'time'" :class="`prop-value ${val.datatype}`" v-html="formattedTime(val.datavalue.value)"></span>
-                            <template v-else-if="val.datatype === 'monolingualtext'">
-                              <span v-if="val.datavalue.value.language === language" :class="`prop-value ${val.datatype}`" v-html="`${val.datavalue.value.text}`"></span>
+                            <span v-else-if="val.datavalue?.type === 'quantity'" :class="`prop-value ${val.datavalue?.type}`" v-html="quantity(val.datavalue.value)"></span>
+                            <span v-else-if="val.datavalue?.type === 'time'" :class="`prop-value ${val.datavalue?.type}`" v-html="formattedTime(val.datavalue.value)"></span>
+                            <template v-else-if="val.datavalue?.type === 'monolingualtext'">
+                              <span v-if="val.datavalue.value.language === language" :class="`prop-value ${val.datavalue?.type}`" v-html="`${val.datavalue.value.text}`"></span>
                             </template>
-                            <img v-else-if="val.datatype === 'commonsMedia' && commonsMediaImageMime(val.datavalue.value)" :class="`prop-value ${val.datatype}`" :src="`https://commons.wikimedia.org/w/thumb.php?f=${encodeURIComponent(val.datavalue.value)}&w=200`">                    
-                            <audio v-else-if="val.datatype === 'commonsMedia' && commonsMediaAudioMime(val.datavalue.value)" :class="`prop-value ${val.datatype}`" controls>
+                            <img v-else-if="val.datavalue?.type === 'commonsMedia' && commonsMediaImageMime(val.datavalue.value)" :class="`prop-value ${val.datavalue?.type}`" :src="`https://commons.wikimedia.org/w/thumb.php?f=${encodeURIComponent(val.datavalue.value)}&w=200`">                    
+                            <audio v-else-if="val.datavalue?.type === 'commonsMedia' && commonsMediaAudioMime(val.datavalue.value)" :class="`prop-value ${val.datavalue?.type}`" controls>
                               <source :src="commonsURL(val.datavalue.value)" :type="commonsMediaAudioMime(val.datavalue.value)">
                             </audio>
-                            <a v-else-if="val.datatype === 'url'" :class="`prop-value ${val.datatype}`" :href="val.datavalue.value" v-html="val.datavalue.value" target="_blank"></a>
-                            <a v-else-if="val.datatype === 'external-id'" :class="`prop-value ${val.datatype}`" v-html="val.datavalue.value" :href="formatURL(val.datavalue.value, pid)" target="_blank"></a>
-                            <a v-else-if="val.datatype === 'globe-coordinate'" :class="`prop-value ${val.datatype}`" v-html="coords(val.datavalue.value)" target="_blank"></a>
-                            <span v-else :class="`prop-value ${val.datatype}`" v-html="val.datavalue.value"></span>
+                            <a v-else-if="val.datavalue?.type === 'url'" :class="`prop-value ${val.datavalue?.type}`" :href="val.datavalue.value" v-html="val.datavalue.value" target="_blank"></a>
+                            <a v-else-if="val.datavalue?.type === 'external-id'" :class="`prop-value ${val.datavalue?.type}`" v-html="val.datavalue.value" :href="formatURL(val.datavalue.value, pid)" target="_blank"></a>
+                            <a v-else-if="val.datavalue?.type === 'globecoordinate'" :class="`prop-value ${val.datavalue?.type}`" v-html="coords(val.datavalue.value)" target="_blank"></a>
+                            <span v-else :class="`prop-value ${val.datavalue?.type}`" v-html="val.datavalue.value"></span>
                           </template>
                         </template>
                       </div>
@@ -260,20 +272,32 @@
     
 <script setup lang="ts">
 
-  import { computed, toRaw, watch } from 'vue'
+  import { computed, onMounted, ref, toRaw, watch } from 'vue'
   import {Md5} from 'ts-md5'
 
   import { useEntitiesStore } from '../store/entities'
   import { storeToRefs } from 'pinia'
   const store = useEntitiesStore()
-  const { language, labels, urlformatters, entity } = storeToRefs(store)
+  const { language, labels, qid, urlformatters } = storeToRefs(store)
 
   // watch(entity, () => console.log(toRaw(entity.value)))
   // watch(labels, () => console.log(toRaw(labels.value)))
 
   const props = defineProps({
-    moduleId: { type: String, default: () => '' }
+    moduleId: { type: String, default: () => '' },
+    eid: { type: String }
   })
+
+  const eid = ref()
+  watch(eid, () => console.log(`claims: ${eid.value}`))
+
+  const entity = computed(() => {
+    return store.entities[eid.value]
+  })
+  watch(entity, () => console.log(toRaw(entity.value)))
+
+  onMounted(() => eid.value = props.eid || qid.value)
+  watch(props, () => eid.value = props.eid || qid.value)
 
   const translations = {}
 
@@ -292,17 +316,18 @@
   ])
 
   const claims = computed(() => {
-    return entity.value?.claims && Object.keys(entity.value.claims).length > 0 && Object.keys(labels.value).length > 0
-      ? Object.fromEntries(Object.keys(entity.value.claims)
+    let _claims = entity.value?.claims
+    return _claims && Object.keys(_claims).length > 0 && Object.keys(labels.value).length > 0
+      ? Object.fromEntries(Object.keys(_claims)
         .filter(pid => !exclude.has(pid))
-        .filter((pid: string) => entity.value?.claims[pid][0].mainsnak.datatype !== 'external-id')
+        .filter((pid: string) => _claims[pid][0].mainsnak.datavalue?.type !== 'external-id')
         .map((pid: string) => ( {pid, label: labels.value[pid] ? pid : pid } ))
         .sort((a: any, b: any) => (a.label.toLowerCase() > b.label.toLowerCase()) ? 1 : -1)
         .map((p: any) => p.pid)
-        .map(pid => [pid, entity.value.claims[pid]]))
+        .map(pid => [pid, _claims[pid]]))
       : []
   })
-  // watch(claims, () => console.log(toRaw(claims.value)))
+  watch(claims, () => console.log('claims', toRaw(claims.value)))
 
   function entitySelected(e: any) {
     store.setQid(e.target.dataset.qid)
@@ -522,7 +547,7 @@ table {
     hyphens: auto;
   }
 
-  .prop-value.wikibase-item {
+  .prop-value.wikibase-entityid {
     cursor: pointer;
   }
 

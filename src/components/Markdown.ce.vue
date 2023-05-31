@@ -87,7 +87,7 @@
   const html = computed(() => markdown.value && parseMarkdown(markdown.value))
   const content = computed(() => html.value && parseHtml(html.value))
 
-  watch(content, () => console.log(toRaw(content.value)))
+  // watch(content, () => console.log(toRaw(content.value)))
 
   onMounted(async () =>  {
     markdown.value = await getMarkdown('https://raw.githubusercontent.com/rsnyder/vue3-netlify/main/static/pages/en/default.md')

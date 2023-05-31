@@ -7,7 +7,6 @@ export async function handler(event, context, callback) {
 
     const qid = event.path.split('/').filter(pe => pe).pop()
     const URL = `https://www.wikidata.org/wiki/Special:EntityData/${qid}.json`
-    console.log(URL)
 
     const resp = await axios.get(URL, {
         headers: {

@@ -147,7 +147,7 @@
   watch(entity, () => { if (entity.value.id !== qid.value && isActive.value) getIdProps() })
 
   const idProps = ref({})
-  watch(idProps, () => console.log(toRaw(idProps.value)))
+  // watch(idProps, () => console.log(toRaw(idProps.value)))
 
   async function getIdProps() {
     qid.value = entity.value.id

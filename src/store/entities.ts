@@ -39,17 +39,26 @@ export const useEntitiesStore = defineStore('entities', {
   },
 
   actions: {
-    async fetch(qid:any) {
-      // console.log(`entities.fetch: qid=${qid} exists=${this.entityData[qid] !== undefined}`)
-      if (!this.entityData[qid]) {
+    async fetch(eid:any) {
+      console.log(`entities.fetch: eid=${eid} exists=${this.entityData[eid] !== undefined}`)
+      if (!this.entityData[eid]) {
         this.fetching = true
-        const response = await fetch(`https://www.wikidata.org/wiki/Special:EntityData/${qid}.json`)
+        let url = eid[0] === 'M'
+          ? `https://commons.wikimedia.org/wiki/Special:EntityData/${eid}.json`
+          : `https://www.wikidata.org/wiki/Special:EntityData/${eid}.json`
+        const response = await fetch(url)
         try {
           const result = await response.json()
-          Object.values(result.entities).forEach((entity:any) => entity.summaryText = {})
+          Object.values(result.entities).forEach((entity:any) => {
+            if (entity.statements) {
+              entity.claims = entity.statements
+              delete entity.statements
+            }
+            entity.summaryText = {}
+          })
           this.entityData = {...this.entityData, ...result.entities}
           let labelUpdates = {}
-          findQids(result.entities[qid].claims).forEach(eid => { 
+          findQids(result.entities[eid].claims).forEach(eid => { 
             if (!this.allLabels[eid]) labelUpdates[eid] = {}
             if (eid[0] === 'P' && !this.urlformatters[eid]) this.urlformatters[eid] = undefined
           })
@@ -64,6 +73,7 @@ export const useEntitiesStore = defineStore('entities', {
         this.fetching = false
         this.entity = this.setEntityForLanguage(this.qid, this.language, this.entityData)
       }
+      return this.entityData[eid]
     },
     setQid(qid:any) {
       if (qid !== this.qid) {
@@ -131,7 +141,7 @@ export const useEntitiesStore = defineStore('entities', {
     async updateUrlformatters() {
       if (!this.urlformattersFetching) {
         let qids = Object.keys(this.urlformatters).filter((pid: string) => this.urlformatters[pid] === undefined)
-        console.log(`updateUrlformatters: qids=${qids.length}`)
+        // console.log(`updateUrlformatters: qids=${qids.length}`)
         if (qids.length > 0) {
           this.urlformattersFetching = true
           let values = qids.map(pid => `(<http://www.wikidata.org/entity/${pid}>)`).join(' ')

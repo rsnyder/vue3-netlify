@@ -30,7 +30,7 @@
                 <div v-for="(pval, idx) in prop.values" :key="`prop-${prop.id}-${idx}`">
 
                   <div v-if="prop.type === 'WikibaseItem'" class="prop-value">
-                    <span class="wikibase-item" v-html="pval.value.label" @click="entitySelected"
+                    <span class="wikibase-entityid" v-html="pval.value.label" @click="entitySelected"
                           :data-qid="pval.value.id" :id="`related-${prop.id}-${idx}-${pval.value.id}`">
                     </span>
                     <span class="description" v-html="pval.value.description"></span>
@@ -53,7 +53,7 @@
             <div v-for="(pval, idx) in prop.values" :key="`prop-${prop.id}-${idx}`">
   
               <div v-if="prop.type === 'WikibaseItem'" class="prop-value">
-                <span class="wikibase-item" v-html="pval.value.label" @click="entitySelected"
+                <span class="wikibase-entityid" v-html="pval.value.label" @click="entitySelected"
                       :data-qid="pval.value.id" :id="`related-${prop.id}-${idx}-${pval.value.id}`">
                 </span>
                 <span class="description" v-html="pval.value.description"></span>
@@ -405,7 +405,7 @@ table {
     hyphens: auto;
   }
 
-  span.wikibase-item {
+  span.wikibase-entityid {
     display: inline;
     cursor: pointer;
     color: #0164b9;
