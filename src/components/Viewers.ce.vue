@@ -44,7 +44,7 @@
             <ve-template label="Wikidata" id="wd-images"></ve-template>
           </sl-tab-panel>
           <sl-tab-panel name="wc">
-            <ve-template label="Wikimedia Commons" id="wc"></ve-template>
+            <ve-wikimedia-commons label="Wikimedia Commons" id="wc"></ve-wikimedia-commons>
           </sl-tab-panel>
         </sl-tab-group>
       </sl-tab-panel>

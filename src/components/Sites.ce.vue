@@ -21,7 +21,7 @@
           <!-- <div v-html="idProp(claim.property).description"></div> -->
         </td>
         <td>
-          <a :class="`prop-value ${claim.datatype}`" v-html="claim.datavalue.value" :href="formatURL(claim)" target="_blank"></a>
+          <a :class="`prop-value ${claim.datatype}`" v-html="claim.datavalue?.value" :href="formatURL(claim)" target="_blank"></a>
           <!-- <property-values :prop="prop" :translations="translations" @entity-selected="entitySelected"></property-values> -->
         </td>
       </tr>
@@ -185,7 +185,7 @@
   function formatURL(claim: any) {
     let pid = claim.property
     // console.log(urlformatters.value[pid])
-    return urlformatters.value[pid] ? urlformatters.value[pid].replace(/\$1/, claim.datavalue.value) : claim.datavalue.value
+    return urlformatters.value[pid] ? urlformatters.value[pid].replace(/\$1/, claim.datavalue?.value) : claim.datavalue?.value
   }
 
 </script>
