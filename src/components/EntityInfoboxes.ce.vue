@@ -70,8 +70,8 @@
         theme: 'light-border',
         touch: 'hold',
         onShow: (instance) => {
-          let qid = <string>(<HTMLElement>instance.reference).dataset.qid
-          instance.setContent(`<ve-entity-card qid="${qid}"></ve-entity-card>`)
+          let eid = <string>(<HTMLElement>instance.reference).dataset.qid
+          instance.setContent(`<ve-entity-card eid="${eid}"></ve-entity-card>`)
         },
         onHide: () => {}
       })

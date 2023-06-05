@@ -19,7 +19,7 @@
   })
 
   const eid = ref()
-  watch(eid, () => console.log(`statements: ${eid.value}`))
+  // watch(eid, () => console.log(`statements: ${eid.value}`))
 
   onMounted(() => eid.value = props.eid || qid.value)
   watch(props, () => eid.value = props.eid)

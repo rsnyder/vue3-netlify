@@ -41,7 +41,7 @@
             <ve-template label="JSTOR Community Collections" id="jstor-cc"></ve-template>
           </sl-tab-panel>
           <sl-tab-panel name="wd-images">
-            <ve-template label="Wikidata" id="wd-images"></ve-template>
+            <ve-wikidata-images label="Wikidata" id="wd-images"></ve-wikidata-images>
           </sl-tab-panel>
           <sl-tab-panel name="wc">
             <ve-wikimedia-commons label="Wikimedia Commons" id="wc"></ve-wikimedia-commons>

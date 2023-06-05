@@ -31,14 +31,14 @@
 <script setup lang="ts">
 
   import { computed, onMounted, ref, toRaw, watch } from 'vue'
-  import {Md5} from 'ts-md5'
 
   import { useEntitiesStore } from '../store/entities'
   import { storeToRefs } from 'pinia'
-  const store = useEntitiesStore()
-  const { entity } = storeToRefs(store)
 
-  watch(entity, () => setBackgroundImage())
+  const store = useEntitiesStore()
+  const { qid } = storeToRefs(store)
+
+  const entity = ref<any>()
 
   const wikipedia = computed(() => entity.value.sitelinks )
   const wikidataUrl = computed(() =>  `https://www.wikidata.org/entity/${entity.value.id}` )
@@ -48,35 +48,20 @@
   const summaryText = computed(() => entity.value.summaryText)
   const backgroundImage = ref<string>()
 
-  onMounted(() => setBackgroundImage())
+  onMounted(async () => entity.value = await store.fetch(qid.value, true))
+  watch(qid, async () => { if (qid.value) entity.value = await store.fetch(qid.value, true) })
+
+  watch(entity, () => setBackgroundImage())
 
   function setBackgroundImage() {
     let commonsImageFile = entity.value.claims?.P18 ? entity.value.claims.P18[0].mainsnak.datavalue.value : null
-    if (commonsImageFile) backgroundImage.value = `url('${encodeUrl(mwImage(commonsImageFile, 500))}')`
+    if (commonsImageFile) backgroundImage.value = `url('${encodeUrl(store.mwImage(commonsImageFile, 500))}')`
   }
 
   function encodeUrl(url:string) {
     let parts = url.split('/')
     let encoded = `${parts.slice(0,-1).join('/')}/${encodeURIComponent(parts[parts.length-1])}`
     return encoded
-  }
-
-  function mwImage(mwImg: string, width: number) {
-    // Converts Wikimedia commons image URL to a thumbnail link
-    mwImg = decodeURIComponent(mwImg).replace(/ /g,'_')
-    const _md5 = Md5.hashStr(mwImg)
-    const extension = mwImg.split('.').pop()
-    let url = `https://upload.wikimedia.org/wikipedia/commons${width ? '/thumb' : ''}`
-    url += `/${_md5.slice(0,1)}/${_md5.slice(0,2)}/${mwImg}`
-    if (width) {
-      url += `/${width}px-${mwImg}`
-      if (extension === 'svg') {
-        url += '.png'
-      } else if (extension === 'tif' || extension === 'tiff') {
-        url += '.jpg'
-      }
-    }
-    return url
   }
 
 </script>

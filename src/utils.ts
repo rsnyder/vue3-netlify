@@ -7,7 +7,7 @@ export function findQids(claims:any): string[] {
         if (val.mainsnak.datavalue?.type === 'wikibase-entityid') qids.add(val.mainsnak.datavalue.value.id)
         else if (val.mainsnak.datavalue?.type === 'wikibase-property') qids.add(val.mainsnak.datavalue.value.id)
         else if (val.mainsnak.datavalue?.type === 'quantity') qids.add(val.mainsnak.datavalue.value.unit.split('/').pop())
-        else console.log(val.mainsnak.datavalue?.type)
+        // else console.log(val.mainsnak.datavalue?.type)
       }
       
       if (val.qualifiers) {

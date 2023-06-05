@@ -38,7 +38,7 @@
 
           <template v-if="section.cards.classes.has('entities')">
             <div class="my-grid">
-              <ve-entity-card v-for="(card, cidx) in section.cards.content" :key="`${sidx}-${cidx}`" :qid="card.qid"></ve-entity-card>
+              <ve-entity-card v-for="(card, cidx) in section.cards.content" :key="`${sidx}-${cidx}`" :eid="card.qid"></ve-entity-card>
             </div>
           </template>
 

@@ -289,12 +289,12 @@
   })
 
   const eid = ref()
-  watch(eid, () => console.log(`claims: ${eid.value}`))
+  // watch(eid, () => console.log(`claims: ${eid.value}`))
 
   const entity = computed(() => {
     return store.entities[eid.value]
   })
-  watch(entity, () => console.log(toRaw(entity.value)))
+  // watch(entity, () => console.log(toRaw(entity.value)))
 
   onMounted(() => eid.value = props.eid || qid.value)
   watch(props, () => eid.value = props.eid || qid.value)
@@ -327,7 +327,7 @@
         .map(pid => [pid, _claims[pid]]))
       : []
   })
-  watch(claims, () => console.log('claims', toRaw(claims.value)))
+  // watch(claims, () => console.log('claims', toRaw(claims.value)))
 
   function entitySelected(e: any) {
     store.setQid(e.target.dataset.qid)

@@ -1,6 +1,7 @@
 import { defineStore } from 'pinia'
 import { toRaw } from 'vue'
 import { findQids, langLabels } from '../utils'
+import { Md5 } from 'ts-md5'
 
 type Entity = {
   id: string,
@@ -39,8 +40,16 @@ export const useEntitiesStore = defineStore('entities', {
   },
 
   actions: {
-    async fetch(eid:any) {
-      console.log(`entities.fetch: eid=${eid} exists=${this.entityData[eid] !== undefined}`)
+    
+    addEntities(entities:any[]) {
+      let before = Object.keys(this.entityData).length
+      this.entityData = {...this.entityData, ...Object.fromEntries(entities.map(ent => [ent.id, ent]))}
+      let after = Object.keys(this.entityData).length
+      console.log(`addEntities: ${before} -> ${after}`)
+    },
+
+    async fetch(eid:any, addSummaryText:boolean = false) {
+      // console.log(`entities.fetch: eid=${eid} exists=${this.entityData[eid] !== undefined}`)
       if (!this.entityData[eid]) {
         this.fetching = true
         let url = eid[0] === 'M'
@@ -55,6 +64,10 @@ export const useEntitiesStore = defineStore('entities', {
               delete entity.statements
             }
             entity.summaryText = {}
+            if (entity.claims.P18) {
+              entity.image = entity.claims.P18[0].mainsnak.datavalue.value
+              entity.thumbnail = this.mwImage(entity.image)
+            }
           })
           this.entityData = {...this.entityData, ...result.entities}
           let labelUpdates = {}
@@ -71,29 +84,23 @@ export const useEntitiesStore = defineStore('entities', {
           console.error('Error loading entities:', err)
         }
         this.fetching = false
-        this.entity = this.setEntityForLanguage(this.qid, this.language, this.entityData)
       }
-      return this.entityData[eid]
+      // return this.entityData[eid]
+      let entity = this.entityData[eid]
+      return this.setEntityForLanguage(entity, this.language, addSummaryText)
     },
+    
     setQid(qid:any) {
       if (qid !== this.qid) {
         this.qid = qid
-        // console.log(`qid=${this.qid}`)
         if (this.entityData[qid]) {
-          this.entity = this.setEntityForLanguage(this.qid, this.language, this.entityData)
           this.updateLabels()
         } else if (qid) {
           this.fetch(qid)
         }
       }
     },
-    setSummaryText(qid:any, lang:any, text:any) {
-      // console.log(`setEntityForLanguage: qid=${qid} language=${lang} text=${text}`)
-      let entity = this.entityData[qid]
-      entity.summaryText[lang] = text
-      this.entityData = {...this.entityData, ...{[qid]: entity}}
-      if (this.qid === qid) this.entity = this.setEntityForLanguage(this.qid, this.language, this.entityData)
-    },
+
     setLanguage(lang:any) {
       if (lang !== this.language) {
         this.language = lang
@@ -161,34 +168,53 @@ export const useEntitiesStore = defineStore('entities', {
       }
     },
 
-    setEntityForLanguage(qid:string, language:string, entityData:any) {
-      // console.log(`setEntityForLanguage: qid=${qid} language=${language}`, toRaw(entityData))
-      if (qid && entityData[qid]) {
-        let orig = entityData[qid]
-        let _entity:any = {
-          id: orig.id,
-          label: (orig.labels[language] || orig.labels.en || orig.labels[Object.keys(orig.labels)[0]]).value
-        }
-        if (orig.descriptions && orig.aliases[language]) _entity.description = orig.descriptions[language].value
-        if (orig.aliases && orig.aliases[language]) _entity.aliases = orig.aliases[language].map((a:any) => a.value)
-        if (orig.claims) _entity.claims = orig.claims
-        if (orig.sitelinks && orig.sitelinks[`${language}wiki`]) {
-          _entity.sitelinks = orig.sitelinks[`${language}wiki`]
-          if (orig.summaryText[language]) {
-            _entity.summaryText = orig.summaryText[language]
+    async setEntityForLanguage(entity:any, language:string='', addSummaryText:boolean=false) {
+      language = language || this.language
+      let revised:any = { id: entity.id }
+      if (entity.labels && Object.keys(entity.labels).length > 0) revised.label = entity.labels[language]?.value || entity.labels.en?.value || entity.labels[Object.keys(entity.labels)[0]].value
+      if (entity.descriptions && Object.keys(entity.descriptions).length > 0) revised.description = entity.descriptions[language]?.value || entity.descriptions.en?.value || entity.descriptions[Object.keys(entity.descriptions)[0]].value
+      if (entity.aliases && Object.keys(entity.aliases).length > 0) revised.aliases = (entity.aliases[language] || entity.aliases.en || entity.aliases[Object.keys(entity.aliases)[0]]).map((a:any) => a.value)
+      if (entity.claims) revised.claims = entity.claims
+      if (entity.image) revised.image = entity.image
+      if (entity.thumbnail) revised.thumbnail = entity.thumbnail
+
+      if (entity.sitelinks && entity.sitelinks[`${language}wiki`]) {
+        revised.sitelinks = entity.sitelinks[`${language}wiki`]
+        if (addSummaryText) {
+          if (entity.summaryText[language]) {
+            revised.summaryText = entity.summaryText[language]
           } else {
-            let page: number = orig.sitelinks[`${language}wiki`].url.replace(/\/w\//, '/wiki').split('/wiki/').pop()
-            fetch(`https://${language}.wikipedia.org/api/rest_v1/page/summary/${page}`)
-            .then(resp => resp.json())
-            .then(resp => {
-              let summaryText = resp['extract_html'] || resp['extract']
-              this.setSummaryText(qid, this.language, summaryText)
-              // _entity.summaryText = orig.summaryText[language]
-            })
+            let page: number = entity.sitelinks[`${language}wiki`].url.replace(/\/w\//, '/wiki').split('/wiki/').pop()
+            let resp:any = await fetch(`https://${language}.wikipedia.org/api/rest_v1/page/summary/${page}`)
+            if (resp.ok) {
+              resp = await resp.json()
+            }
+            entity.summaryText[language] = resp['extract_html'] || resp['extract']
+            revised.summaryText = entity.summaryText[language]
           }
         }
-        return _entity
       }
+      return revised
+    },
+
+    mwImage(mwImg:any, width:number=300) {
+      // Converts Wikimedia commons image URL to a thumbnail link
+      if (Array.isArray(mwImg)) mwImg = mwImg[0]
+      mwImg = mwImg.split('/').pop()
+      mwImg = decodeURIComponent(mwImg).replace(/ /g,'_')
+      const _md5 = Md5.hashStr(mwImg)
+      const extension = mwImg.split('.').pop()
+      let url = `https://upload.wikimedia.org/wikipedia/commons${width ? '/thumb' : ''}`
+      url += `/${_md5.slice(0,1)}/${_md5.slice(0,2)}/${mwImg}`
+      if (width) {
+        url += `/${width}px-${mwImg}`
+        if (extension === 'svg') {
+          url += '.png'
+        } else if (extension === 'tif' || extension === 'tiff') {
+          url += '.jpg'
+        }
+      }
+      return url
     }
 
   }
