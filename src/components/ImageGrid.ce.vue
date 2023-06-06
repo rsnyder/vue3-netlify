@@ -39,6 +39,7 @@
     height: number;
     mime: string;
     thumb: string;
+    score: number;
   };
 
   function maxImagesInRow(images: Image[], rowWidth: number, maxHeight: number, gap: number): number {
@@ -61,7 +62,7 @@
         break;
       }
     }
-    return imageCount;
+    return imageCount || 1;
   }
 
   function calculateRowHeight(images: Image[], rowWidth: number, gap: number, padding: number) {
@@ -126,6 +127,7 @@
       text.className = 'text'
       text.innerHTML = `
         <p>${rowImages[i].width.toLocaleString()} x ${rowImages[i].height.toLocaleString()} ${rowImages[i].mime.split('/').pop()}</p>
+        <p>Score: ${rowImages[i].score}</p>
       `
       imageCard.appendChild(text)
 

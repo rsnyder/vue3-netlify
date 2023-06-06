@@ -71,17 +71,24 @@
   })
   
   const start = ref(0)
-  const limit = ref(50)
+  const limit = ref(500)
   const images = computed(() => allImages.value?.slice(start.value, start.value + limit.value))
+  // const images = computed(() => allImages.value)
   // watch(images, () => { console.log(toRaw(images.value)) })
 
   const metadata = ref()
   watch(metadata, () => { showDialog.value = metadata.value !== undefined })
   
   function doQuery() {
-    fetch(`/api/commons/${qid.value}`)
-      .then(resp => resp.json())
-      .then(data => allImages.value = data)
+    Promise.all([
+      fetch(`/api/commons/wc/${qid.value}`),
+      fetch(`/api/commons/wd/${qid.value}`)
+    ]).then(async ([commons, wikidata]) => {
+      const commonsData = await commons.json()
+      const wikidataData = await wikidata.json()
+      console.log(commonsData, wikidataData)
+      allImages.value = [...commonsData, ...wikidataData].sort((a: any, b: any) => b.score - a.score)
+    })
   }
 
   async function getMetadata(id: string) {
