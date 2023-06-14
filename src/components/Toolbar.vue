@@ -23,7 +23,6 @@
   const { language } = storeToRefs(store)
 
   function onclick(e:MouseEvent) {
-    console.log('onclick', e)
     store.setQid(null)
     let options:any = { name: 'home', params: {} }
     if (language.value !== 'en') options.query = { lang: language.value }

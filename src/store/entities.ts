@@ -50,7 +50,7 @@ export const useEntitiesStore = defineStore('entities', {
 
     async fetch(eid:any, addSummaryText:boolean = false) {
       if (!eid) return
-      console.log(`entities.fetch: eid=${eid} exists=${this.entityData[eid] !== undefined}`)
+      // console.log(`entities.fetch: eid=${eid} exists=${this.entityData[eid] !== undefined}`)
       if (eid && !this.entityData[eid]) {
         this.fetching = true
         let url = eid[0] === 'M'

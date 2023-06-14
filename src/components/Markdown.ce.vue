@@ -101,7 +101,7 @@
   // Convert essay Markdown into HTML.  Markdown headings are used to infer content heirarchy
   function parseMarkdown(markdown: string): string {
 
-    let tmp = new DOMParser().parseFromString(marked.parse(markdown), 'text/html').children[0].children[1]      
+    let tmp = new DOMParser().parseFromString(marked.parse(markdown, {mangle: false, headerIds: false}), 'text/html').children[0].children[1]      
     let essay = document.createElement('div')
     let currentSection: any = essay
     currentSection.setAttribute('data-id', '1')
