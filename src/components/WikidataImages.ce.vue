@@ -1,8 +1,8 @@
 <template>
 
   <div ref="root">
-    <h1 v-html="props.label"></h1>
-    <ve-image-grid :items="images"></ve-image-grid>
+    <span v-html="props.label" class="title"></span> <span v-if="images" class="count">({{ images?.length.toLocaleString() }})</span>
+    <ve-image-grid  id="wd" :items="images" :active="isActive"></ve-image-grid>
   </div>
 
   <sl-dialog :label="label" class="dialog" :style="{'--width':dialogWidth}">
@@ -34,18 +34,18 @@
 
   const isActive = computed(() => active.value.split('/').pop() === props.id)
   watch(isActive, () => {
-    console.log(`wd.watch.isActive: isActive=${isActive.value} qid=${qid.value} images=${allImages.value?.length || 0}`)
+    // console.log(`wd.watch.isActive: isActive=${isActive.value} qid=${qid.value} images=${allImages.value?.length || 0}`)
     if (isActive.value && !allImages.value) doQuery()
   })
 
   watch(qid, () => {
     allImages.value = null
-    console.log(`wd.watch.qid: qid=${qid.value} isActive=${isActive.value} images=0`)
+    // console.log(`wd.watch.qid: qid=${qid.value} isActive=${isActive.value} images=0`)
     if (isActive.value) doQuery()
   })
 
   onMounted(() => { 
-    console.log(`wd.mounted: qid=${qid.value} isActive=${isActive.value} images=${allImages.value?.length || 0}`)
+    // console.log(`wd.mounted: qid=${qid.value} isActive=${isActive.value} images=${allImages.value?.length || 0}`)
     dialog = shadowRoot.value?.querySelector('.dialog')
     dialog.addEventListener('sl-hide', (evt:CustomEvent) => {
       if (evt.target === dialog) metadata.value = undefined
@@ -67,7 +67,7 @@
 
   const allImages = ref<ImageData[] | null>()
   watch(allImages, () => { 
-    console.log(`wd.watch.allImages: qid=${qid.value} isActive=${isActive.value} images=${allImages.value?.length || 0}`)
+    // console.log(`wd.watch.allImages: qid=${qid.value} isActive=${isActive.value} images=${allImages.value?.length || 0}`)
   })
   
   const start = ref(0)
@@ -79,6 +79,7 @@
   watch(metadata, () => { showDialog.value = metadata.value !== undefined })
   
   function doQuery() {
+    // console.log('wd.doQuery')
     fetch(`/api/commons/wd/${qid.value}`)
       .then(resp => resp.json())
       .then(data => allImages.value = data)
@@ -95,4 +96,13 @@
 </script>
 
 <style>
+  .title {
+    font-size: 1.5em;
+    font-weight: bold;
+  }
+  .count {
+    font-size: 1.2;
+    color: #666;
+    padding-left: .5em;
+  }
 </style>

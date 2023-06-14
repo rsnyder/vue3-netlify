@@ -49,8 +49,9 @@ export const useEntitiesStore = defineStore('entities', {
     },
 
     async fetch(eid:any, addSummaryText:boolean = false) {
-      // console.log(`entities.fetch: eid=${eid} exists=${this.entityData[eid] !== undefined}`)
-      if (!this.entityData[eid]) {
+      if (!eid) return
+      console.log(`entities.fetch: eid=${eid} exists=${this.entityData[eid] !== undefined}`)
+      if (eid && !this.entityData[eid]) {
         this.fetching = true
         let url = eid[0] === 'M'
           ? `https://commons.wikimedia.org/wiki/Special:EntityData/${eid}.json`
@@ -105,7 +106,7 @@ export const useEntitiesStore = defineStore('entities', {
       if (lang !== this.language) {
         this.language = lang
         // console.log(`language=${this.language}`)
-        this.entity = this.setEntityForLanguage(this.qid, this.language, this.entityData)
+        // this.entity = this.setEntityForLanguage(this.qid, this.language, this.entityData)
         this.updateLabels(this.language)
       }
     },

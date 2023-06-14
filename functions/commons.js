@@ -36,7 +36,7 @@ SELECT ?image ?item ?label ?createdby ?depicts ?description ?url ?mime ?width ?h
          schema:encodingFormat ?mime.
   FILTER(?mime IN ('image/jpeg', 'image/png')) .
   OPTIONAL { ?image p:P180 [ps:P180 ?depicts ; wikibase:rank ?rank] . }
-  OPTIONAL { ?image p:P170 ?createdby. }
+  OPTIONAL { ?image p:P170 ?createdby . }
   OPTIONAL { ?image schema:width ?width . }
   OPTIONAL { ?image schema:height ?height . }
   OPTIONAL { ?image wdt:P6243 ?dro . }
@@ -85,25 +85,20 @@ export async function handler(event, context, callback) {
   const pathElems = event.path.split('/').filter(pe => pe)
   const qid = pathElems.pop()
   const prefix = pathElems.pop()
-  console.log(`path: ${event.path} qid: ${qid} prefix: ${prefix}`)
 
   let query = prefix === 'wd'
     ? wdDepictsItemsSPARQL.replace(/{{qid}}/g, qid).trim()
     : wcDepictsItemsSPARQL.replace(/{{qid}}/g, qid).trim()
-  console.log(query)
   let url = `https://commons-query.wikimedia.org/sparql?query=${encodeURIComponent(query)}`
   let resp = await fetch(cookieJar, url, {
     headers: { Accept: 'application/sparql-results+json'}
   })
   .catch(err => {
     console.log(err)
-    initSession()
   })
-  let status = resp.status
   if (resp.ok) {
     resp = await resp.json()
     let data = {}
-    console.log(`${prefix} ${status} ${resp.results.bindings.length}`)
     resp.results.bindings.map(b => {
       let id = b.image.value.split('/').pop()
       let file = decodeURIComponent(b.url.value.split('/').pop())
@@ -123,6 +118,8 @@ export async function handler(event, context, callback) {
         if (b.rank?.value.split('#').pop().replace('Rank', '') === 'Preferred') data[id].depicts[depicted].prominent = true
         if (b.dro?.value.split('/').pop() === depicted) data[id].depicts[depicted].dro = true
       }
+      if (b.createdby) data[id].createdBy = true
+
       if (b.quality?.value) data[id].imageQualityAssessment = commonsImageQualityAssessment[b.quality.value.split('/').pop()]
     })
     let values = Object.values(data).map(img => {

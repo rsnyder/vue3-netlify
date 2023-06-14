@@ -2,7 +2,14 @@
 
   <div ref="root">
     <span v-html="props.label" class="title"></span> <span v-if="images" class="count">({{ images?.length.toLocaleString() }})</span>
-    <ve-image-grid id="wc" :items="images" @item-selected="itemSelected" :active="isActive"></ve-image-grid>
+    <ve-image-grid 
+      id="wc"
+      :active="isActive"
+      :total="images?.length || 0" 
+      :items="showing" 
+      @get-next="getNext" 
+      @item-selected="itemSelected" 
+    ></ve-image-grid>
   </div>
 
   <sl-dialog :label="label" class="dialog" :style="{'--width':dialogWidth}">
@@ -33,23 +40,16 @@
   const shadowRoot = computed(() => root?.value?.parentNode as HTMLElement)
 
   const isActive = computed(() => active.value.split('/').pop() === props.id)
-  watch(isActive, () => {
-    // console.log(`wc.watch.isActive: isActive=${isActive.value} qid=${qid.value} images=${images.value?.length || 0}`)
-    if (isActive.value && !images.value) doQuery()
-  })
+  watch(isActive, () => { if (isActive.value && !images.value.length) doQuery() })
 
   watch(qid, () => {
-    images.value = null
-    // console.log(`wc.watch.qid: qid=${qid.value} isActive=${isActive.value} images=0`)
+    images.value = []
     if (isActive.value) doQuery()
   })
 
   onMounted(() => { 
-    // console.log(`wc.mounted: qid=${qid.value} isActive=${isActive.value} images=${images.value?.length || 0}`)
     dialog = shadowRoot.value?.querySelector('.dialog')
-    dialog.addEventListener('sl-hide', (evt:CustomEvent) => {
-      if (evt.target === dialog) metadata.value = undefined
-    })
+    dialog.addEventListener('sl-hide', (evt:CustomEvent) => { if (evt.target === dialog) metadata.value = undefined })
     if (isActive.value) doQuery() 
   })
 
@@ -68,21 +68,32 @@
     depicts: any[];
   }
 
-  const images = ref<ImageData[] | null>()
+  const images = ref<ImageData[]>([])
   watch(images, () => { 
-    // console.log(`wc.watch.images: qid=${qid.value} isActive=${isActive.value} images=${images.value?.length || 0}`)
-    // console.log(toRaw(images.value))
-    let distinct = new Set(images.value?.map(image => image.id))
-    let numCreatedBy = images.value?.reduce((acc, cur) => acc + (cur.createdBy ? 1 : 0), 0)
-    let numDepicts = images.value?.reduce((acc, cur) => acc + (cur.depicts.find(depicted => qid.value === depicted.id) ? 1 : 0), 0)
+    let distinct = new Set(images.value.map(image => image.id))
+    let numCreatedBy = images.value.reduce((acc, cur) => acc + (cur.createdBy ? 1 : 0), 0)
+    let numDepicts = images.value.reduce((acc, cur) => acc + (cur.depicts.find(depicted => qid.value === depicted.id) ? 1 : 0), 0)
     // console.log(`distinct=${distinct.size} depicts=${numDepicts} createdBy=${numCreatedBy}`)
+
+    end.value = Math.min(20, images.value.length)
   })
   
+  const end = ref(0)
+  function getNext() {
+    end.value = Math.min(end.value + 20, images.value.length)
+  }
+
+  const showing = computed(() => images.value.slice(0, end.value))
+  watch(showing, () => { 
+    // if (showing.value.length) console.log(`tagged.watch.images: qid=${qid.value} isActive=${isActive.value} images=${images.value.length} showing=${end.value}`)    
+  })
+
   const metadata = ref()
   watch(metadata, () => { showDialog.value = metadata.value !== undefined })
   
   function doQuery() {
-    // console.log('wc.doQuery')
+    images.value = []
+    // console.log(`tagged.doQuery: qid=${qid.value} isActive=${isActive.value}`)
     Promise.all([
       fetch(`/api/commons/wc/${qid.value}`),
       fetch(`/api/commons/wd/${qid.value}`)

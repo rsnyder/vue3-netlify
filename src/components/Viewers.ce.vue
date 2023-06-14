@@ -26,11 +26,15 @@
 
       <sl-tab-panel name="images">
         <sl-tab-group placement="start">
+          <sl-tab slot="nav" panel="tagged" :active="activeViewer === 'tagged' ? '' : null">Tagged</sl-tab>
           <sl-tab slot="nav" panel="bhl" :active="activeViewer === 'bhl' ? '' : null">BHL</sl-tab>
           <sl-tab slot="nav" panel="ov" :active="activeViewer === 'ov' ? '' : null">Openverse</sl-tab>
           <sl-tab slot="nav" panel="jstor-cc" :active="activeViewer === 'jstor-cc' ? '' : null">JSTOR</sl-tab>
           <sl-tab slot="nav" panel="wd-images" :active="activeViewer === 'wd-images' ? '' : null">Wikidata</sl-tab>
           <sl-tab slot="nav" panel="wc" :active="activeViewer === 'wc' ? '' : null">Wikimedia Commons</sl-tab>
+          <sl-tab-panel name="tagged">
+            <ve-tagged label="Tagged Images" id="tagged"></ve-tagged>
+          </sl-tab-panel>
           <sl-tab-panel name="bhl">
             <ve-template label="Biodiversity Heritage Library" id="bhl"></ve-template>
           </sl-tab-panel>
@@ -38,7 +42,7 @@
             <ve-template label="Openverse" id="ov"></ve-template>
           </sl-tab-panel>
           <sl-tab-panel name="jstor-cc">
-            <ve-template label="JSTOR Community Collections" id="jstor-cc"></ve-template>
+            <ve-jstor-cc label="JSTOR Community Collections" id="jstor-cc"></ve-jstor-cc>
           </sl-tab-panel>
           <sl-tab-panel name="wd-images">
             <ve-wikidata-images label="Wikidata" id="wd-images"></ve-wikidata-images>

@@ -32,22 +32,27 @@
 
 <script setup lang="ts">
 
-  import { computed, ref, toRaw, watch } from 'vue'
+  import { computed, onMounted, ref, toRaw, watch } from 'vue'
   import * as jsonld from 'jsonld'
 
   import { useEntitiesStore } from '../store/entities'
   import { storeToRefs } from 'pinia'
   const store = useEntitiesStore()
-  const { active, entity, labels, language, urlformatters } = storeToRefs(store)
+  const { active, qid, labels, language, urlformatters } = storeToRefs(store)
 
   const props = defineProps({
     label: { type: String, default: 'Template' },
     id: { type: String, default: 'template' },
   })
 
+  const sparqlEndpoint = 'https://query.wikidata.org/sparql'
+
   const isActive = computed(() => active.value.split('/').pop() === props.id)
 
-  const sparqlEndpoint = 'https://query.wikidata.org/sparql'
+  watch(qid, async () => { if (qid.value) entity.value = await store.fetch(qid.value, true) })
+  onMounted(async () => { if (qid.value) entity.value = await store.fetch(qid.value, true) })
+
+  const entity = ref<any>()
 
   const context = {
     wd: 'http://www.wikidata.org/entity/',
@@ -132,25 +137,22 @@
     }`
 
   const externalIdClaims = computed(() => 
-    Object.values(entity.value.claims || [])
+    Object.values(entity.value?.claims || [])
       .filter((claimVals: any) => claimVals[0].mainsnak.datatype === 'external-id')
       .map((claimVals: any) => claimVals[0].mainsnak)
   )
 
   const externalIdProps = computed(() => externalIdClaims.value.map((claim: any) => `wd:${claim.property}`))
 
-  const descriptions:any = {}
+  const descriptions:any = {} // TODO
 
-  const qid = ref()
-
-  watch(isActive, () => { if (entity.value.id !== qid.value && isActive.value) getIdProps() })
-  watch(entity, () => { if (entity.value.id !== qid.value && isActive.value) getIdProps() })
+  watch(isActive, () => getIdProps() )
+  watch(entity, () => getIdProps() )
 
   const idProps = ref({})
   // watch(idProps, () => console.log(toRaw(idProps.value)))
 
   async function getIdProps() {
-    qid.value = entity.value.id
     let pids = externalIdProps.value.filter((pid: string) => !idProps.value[pid])
     if (pids.length > 0) {
       let query = sparql.replace(/{{qids}}/, `(${pids.join(') (')})`).replace(/{{language}}/g, language.value)
