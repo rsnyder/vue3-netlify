@@ -78,19 +78,27 @@
 
 <script setup lang="ts">
 
-  import { computed, ref, toRaw, watch } from 'vue'
+  import { computed, onMounted, ref, toRaw, watch } from 'vue'
   import * as jsonld from 'jsonld'
 
   import { useEntitiesStore } from '../store/entities'
   import { storeToRefs } from 'pinia'
   const store = useEntitiesStore()
-  const { active, entity, language } = storeToRefs(store)
+  const { active, qid, language } = storeToRefs(store)
 
   const props = defineProps({
     id: { type: String, default: 'template' }
   })
 
   const isActive = computed(() => active.value.split('/').pop() === props.id)
+  watch(isActive, () => { if (entity.value.id !== qid.value && isActive.value) loadData() })
+
+
+  watch(qid, async () => { if (qid.value) entity.value = await store.fetch(qid.value, true) })
+  onMounted(async () => { if (qid.value) entity.value = await store.fetch(qid.value, true) })
+  
+  const entity = ref<any>()
+  watch(entity, () => loadData() )
 
   const claims = ref()
   const translations = {}
@@ -169,13 +177,7 @@
     'category combines topics'
   ]
 
-  const qid = ref()
-
-  watch(isActive, () => { if (entity.value.id !== qid.value && isActive.value) loadData() })
-  watch(entity, () => { if (entity.value.id !== qid.value && isActive.value) loadData() })
-
   async function loadData() {
-    qid.value = entity.value.id
     let query = sparqlTemplate.replace(/{{qid}}/, entity.value.id).replace(/{{language}}/g, language.value)
     let resp = await fetch(sparqlEndpoint, {
       method: 'POST',

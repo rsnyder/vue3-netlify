@@ -39,7 +39,7 @@
             <ve-template label="Biodiversity Heritage Library" id="bhl"></ve-template>
           </sl-tab-panel>
           <sl-tab-panel name="ov">
-            <ve-template label="Openverse" id="ov"></ve-template>
+            <ve-openverse label="Openverse" id="ov"></ve-openverse>
           </sl-tab-panel>
           <sl-tab-panel name="jstor-cc">
             <ve-jstor-cc label="JSTOR Community Collections" id="jstor-cc"></ve-jstor-cc>

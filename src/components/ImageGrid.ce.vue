@@ -7,7 +7,11 @@
 <script setup lang="ts">
 
   import { computed, nextTick, onMounted, ref, toRaw, watch } from 'vue'
-  
+  import yaml from 'js-yaml'
+
+  const targetHeight = 250
+  const minWidth = 210
+
   const emit = defineEmits(['item-selected', 'get-next'])
 
   const props = defineProps({
@@ -22,14 +26,28 @@
   })
 
   interface Image {
+    aspect_ratio?: number
+    attribution?: string
+    creator?: string
+    creator_url?: string
+    depicts?: string[]
+    description?: string
+    detail_url?: string
+    foreign_landing_url?: string
+    format?: string
     id: string
-    label: string
-    description: string
-    width: number
     height: number
-    mime: string
-    thumb: string
-    score: number
+    license?: string
+    license_url?: string
+    license_version?: string
+    provider?: string
+    score?: number
+    source?: string
+    tags?: string[]
+    title?: string
+    thumbnail: string
+    url?: string
+    width: number
   }
 
   const root = ref<HTMLElement | null>(null)
@@ -46,13 +64,17 @@
       shadowRoot.value?.querySelectorAll('.grid-row').forEach((row) => row.remove())
     }
 
+    images.value.slice(prior?.length || 0).forEach((image:Image) => {
+      // console.log(yaml.dump(image, {sortKeys: true, lineWidth: -1}))
+    })
+  
     await checkImagesSizes(images.value.slice(prior?.length || 0))
 
     let idx = 0
     if (prior?.length > 0) {
       let lastRow = Array.from(shadowRoot.value?.querySelectorAll('.grid-row') || []).pop()
       let firstCardInLastRow = lastRow?.firstChild as HTMLElement
-      idx = images.value.findIndex((image:any) => image.id === firstCardInLastRow.getAttribute('data-id'))
+      idx = images.value.findIndex((image:any) => image.id === firstCardInLastRow?.getAttribute('data-id'))
       lastRow?.remove()
     }
 
@@ -104,12 +126,12 @@
     return new Promise((resolve, reject) => {
       let img = new Image()
       img.onload = () => {
-        let width = img.width < 250 ? 250 : img.width
-        let height = img.width < 250 ? img.height * 250/img.width : img.height
+        let width = img.width < minWidth ? minWidth : img.width
+        let height = img.width < minWidth ? img.height * minWidth/img.width : img.height
         resolve({...image, width, height, mime: 'image/jpeg'})
       }
       img.onerror = () => reject()
-      img.src = image.thumb
+      img.src = image.thumbnail
     })
   }
 
@@ -162,7 +184,7 @@
   }
 
   function makeRow(idx:number, gap=20, padding=0) {
-    let max = maxImagesInRow(images.value.slice(idx) as Image[], gridWidth.value, 250, gap)
+    let max = maxImagesInRow(images.value.slice(idx) as Image[], gridWidth.value, targetHeight, gap)
     let rowImages = images.value.slice(idx, idx + max) as Image[]
 
     let rowHeight = calculateRowHeight(rowImages, gridWidth.value, gap, padding)
@@ -180,9 +202,9 @@
     for (let i = 0; i < rowImages.length; i++) {
       let image = rowImages[i]
       let aspect = Number((image.width/image.height).toFixed(3))
-      let width = rowHeight < 500
+      let width = rowHeight < targetHeight * 2
         ? Number((rowHeight * aspect).toFixed(0))
-        : Number((350 * aspect).toFixed(0))
+        : Number(((targetHeight + 100) * aspect).toFixed(0))
       
       // Create the image card
       let imageCardEl = document.createElement('div')
@@ -194,7 +216,7 @@
       imageCardEl.addEventListener('click', () => emit('item-selected', image))
 
       let imgEl = document.createElement('img')
-      imgEl.src = image.thumb
+      imgEl.src = image.thumbnail
       imgEl.style.width = `calc(100% - ${padding * 2}px)`
       imageCardEl.appendChild(imgEl)
 
@@ -202,7 +224,8 @@
       textEl.className = 'text'
       let textItems:string[] = []
       textItems.push(`<div>${idx + i + 1}</div>`)
-      if (image.label) textItems.push(`<div class="clamp">${image.label}</div>`)
+      if (image.id) textItems.push(`<div>${image.id}</div>`)
+      if (image.title) textItems.push(`<div class="clamp">${image.title}</div>`)
       // if (image.width) textItems.push(`<p>${image.width.toLocaleString()} x ${image.height.toLocaleString()} ${image.mime.split('/').pop()}</p>`)
       // if (image.score) textItems.push(`<p>Score: ${image.score}</p>`)
       textEl.innerHTML = textItems.join('')

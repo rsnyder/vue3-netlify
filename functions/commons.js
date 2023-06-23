@@ -1,19 +1,20 @@
 import {fetch, CookieJar} from 'node-fetch-cookies'
 import md5 from 'js-md5'
 
-let wcqsOauthToken = 'd08f9e174f67cbd331a7b8733cd71418.410ed743498df300d5cf94d24736a37989399305'
 const cookieJar = new CookieJar()
 
 const wcDepictsItemsSPARQL = `
-SELECT DISTINCT ?image ?url ?createdby ?depicts ?rank ?dro ?quality ?width ?height ?mime WHERE { 
+SELECT DISTINCT ?image ?label ?description ?url ?createdby ?depicts ?rank ?dro ?quality ?width ?height ?mime WHERE { 
   ?image (wdt:P170 | wdt:P180) wd:{{qid}}; 
-         schema:url ?url .   
+         schema:url ?url .
+  OPTIONAL { ?image rdfs:label ?label. }
+  OPTIONAL { ?image schema:description ?description. }
   OPTIONAL { ?image p:P170 ?createdby. }
   OPTIONAL { ?image p:P180 [ps:P180 ?depicts; wikibase:rank ?rank] .}
-  ?image schema:encodingFormat ?mime .
+  ?image (schema:encodingFormat | wdt:P1163) ?mime .
   FILTER(?mime IN ('image/jpeg', 'image/png')) .
-  OPTIONAL { ?image schema:width ?width . }
-  OPTIONAL { ?image schema:height ?height . }
+  OPTIONAL { ?image (schema:width | wdt:P2049) ?width . }
+  OPTIONAL { ?image (schema:height | wdt:P2048) ?height . }
   OPTIONAL { ?image wdt:P6243 ?dro . }
   OPTIONAL { ?image wdt:P6731 ?quality . }
 }`
@@ -33,12 +34,12 @@ SELECT ?image ?item ?label ?createdby ?depicts ?description ?url ?mime ?width ?h
   INCLUDE %items. 
   ?image (wdt:P170 | wdt:P180) ?item;
          schema:url ?url;
-         schema:encodingFormat ?mime.
+         (schema:encodingFormat | wdt:P1163 ) ?mime.
   FILTER(?mime IN ('image/jpeg', 'image/png')) .
   OPTIONAL { ?image p:P180 [ps:P180 ?depicts ; wikibase:rank ?rank] . }
   OPTIONAL { ?image p:P170 ?createdby . }
-  OPTIONAL { ?image schema:width ?width . }
-  OPTIONAL { ?image schema:height ?height . }
+  OPTIONAL { ?image (schema:width | wdt:P2049) ?width . }
+  OPTIONAL { ?image (schema:height | wdt:P2048) ?height . }
   OPTIONAL { ?image wdt:P6243 ?dro . }
   OPTIONAL { ?image wdt:P6731 ?quality . }
 }`
@@ -57,7 +58,7 @@ async function initSession() {
   console.log('Initializing Wikimedia Commons Query Service session')
   await fetch(cookieJar, 'https://commons-query.wikimedia.org', {
     credentials: 'include',
-    headers: { Cookie: `wcqsOauth=${wcqsOauthToken};` }
+    headers: { Cookie: `wcqsOauth=${process.env.WCQS_OAUTH_TOKEN};` }
   })
 }
 
@@ -89,6 +90,7 @@ export async function handler(event, context, callback) {
   let query = prefix === 'wd'
     ? wdDepictsItemsSPARQL.replace(/{{qid}}/g, qid).trim()
     : wcDepictsItemsSPARQL.replace(/{{qid}}/g, qid).trim()
+  // console.log(query)
   let url = `https://commons-query.wikimedia.org/sparql?query=${encodeURIComponent(query)}`
   let resp = await fetch(cookieJar, url, {
     headers: { Accept: 'application/sparql-results+json'}
@@ -104,14 +106,16 @@ export async function handler(event, context, callback) {
       let file = decodeURIComponent(b.url.value.split('/').pop())
       if (!data[id]) data[id] = {
         id,
-        thumb: mwImage(file, 300),
+        thumbnail: mwImage(file, 300),
         width: parseInt(b.width.value),
         height: parseInt(b.height.value),
-        aspect: Number((parseInt(b.width.value)/parseInt(b.height.value)).toFixed(4)),
-        mime: b.mime.value,
+        aspect_ratio: Number((parseInt(b.width.value)/parseInt(b.height.value)).toFixed(4)),
+        format: b.mime.value,
         file,
         depicts: {}
       }
+      if (b.label?.value) data[id].label = b.label.value
+      if (b.description?.value) data[id].description = b.description.value
       let depicted = b.depicts?.value.split('/').pop()
       if (depicted) {
         data[id].depicts[depicted] = { id: depicted }

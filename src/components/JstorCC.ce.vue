@@ -73,18 +73,34 @@
   const showDialog = ref(false)
   watch(showDialog, () => { dialog.open = showDialog.value })
 
-  interface ImageData {
-    id: string;
-    thumb: string;
-    alt: string;
-    width: number;
-    height: number;
-    createdBy: boolean;
-    depicts: any[];
+  interface Image {
+    aspect_ratio?: number
+    attribution?: string
+    creator?: string
+    creator_url?: string
+    depicts?: string[]
+    description?: string
+    detail_url?: string
+    foreign_landing_url?: string
+    format?: string
+    id: string
+    height?: number
+    license?: string
+    license_url?: string
+    license_version?: string
+    provider?: string
+    score?: number
+    source?: string
+    tags?: string[]
+    title?: string
+    thumbnail?: string
+    url?: string
+    width?: number
   }
 
   const total = ref(0)
-  const images = ref<ImageData[]>([])
+  const images = ref<Image[]>([])
+  watch(images, () => { console.log(toRaw(images.value)) } )
   
   const metadata = ref()
   watch(metadata, () => { showDialog.value = metadata.value !== undefined })
@@ -130,21 +146,25 @@
       resp = await resp.json()
       if (resp.paging && resp.paging.next) pager = resp.paging.next
       results = {total: resp.total || 0, items: resp.results}
+      let updated: any = [...images.value || [], ...results.items.map((item: any) => transformItem(item))]
+      images.value = updated
+      total.value = results.total
     }
     isFetching = false
-    let updated: any = [...toRaw(images.value) || [], ...results.items.map((item: any) => transformItem(item))]
-    images.value = updated
-    total.value = results.total
   }
 
   function transformItem(item: any): any {
-    let doc: any = {id: item.doi, source: 'https://www.jstor.org', images:{}}
+    let doc: any = {
+      id: item.doi, 
+      provider: 'jstor',
+      depicts: [qid.value]
+    }
     doc.url = `https://www.jstor.org/stable/${item.doi.indexOf('10.2307') === 0 ? item.doi.slice(8) : item.doi}`
     // doc.images = {id: sha256(doc.url)}
-    if (item.item_title) doc.label = item.item_title
+    if (item.item_title) doc.title = item.item_title
     if (item.ps_desc) doc.description = item.ps_desc.join(' ')
-    if (item.ps_source) doc.source = item.ps_source.join(' ')
-    if (item.primary_agents) doc.creator = item.primary_agents.join('; ')
+    if (item.ps_source) doc.attribution = item.ps_source.join(' ')
+    if (item.primary_agents?.length > 0) doc.creator = item.primary_agents.join('; ')
     if (item.cc_reuse_license && item.cc_reuse_license.length == 1) {
       if (item.cc_reuse_license[0] === 'Creative Commons: Free Reuse (CC0)') doc.license = 'CC0'
       else if (item.cc_reuse_license[0] === 'Creative Commons: Attribution') doc.license = 'CC BY'
@@ -155,9 +175,9 @@
       else if (item.cc_reuse_license[0] === 'Creative Commons: Attribution-NonCommercial-NoDerivs') doc.license = 'CC BY-NC-ND'
       else doc.license = item.cc_reuse_license[0]
     }
-    doc.images.default = `https://www.jstor.org/stable/${item.doi.indexOf('10.2307') === 0 ? item.doi.slice(8) : item.doi}`
-    doc.images.thumbnail = `https://www.jstor.org/api/cached/thumbnails/202003101501/byitem/${item.id}/0`
-    doc.thumb = doc.images.thumbnail
+    // doc.images.default = `https://www.jstor.org/stable/${item.doi.indexOf('10.2307') === 0 ? item.doi.slice(8) : item.doi}`
+    doc.thumbnail = `https://www.jstor.org/api/cached/thumbnails/202003101501/byitem/${item.id}/0`
+    /*
     doc.details = Object.fromEntries(Object.entries(item)
       .filter(([key, value]) => {
         // if (exclude.has(key)) return false
@@ -168,6 +188,7 @@
       })
       .map(args => [args[0], args[1]]
     ))
+    */
     return doc
   }
   

@@ -15,6 +15,7 @@ import JstorCC from './components/JstorCC.ce.vue'
 import LanguageSelector from './components/LanguageSelector.ce.vue'
 import Markdown from './components/Markdown.ce.vue'
 import Modal from './components/Modal.ce.vue'
+import Openverse from './components/Openverse.ce.vue'
 import Referencing from './components/Referencing.ce.vue'
 import Sites from './components/Sites.ce.vue'
 import Statements from './components/Statements.ce.vue'
@@ -35,6 +36,7 @@ customElements.define('ve-jstor-cc', defineCustomElement(JstorCC))
 customElements.define('ve-language-selector', defineCustomElement(LanguageSelector))
 customElements.define('ve-markdown', defineCustomElement(Markdown))
 customElements.define('ve-modal', defineCustomElement(Modal))
+customElements.define('ve-openverse', defineCustomElement(Openverse))
 customElements.define('ve-referencing', defineCustomElement(Referencing))
 customElements.define('ve-sites', defineCustomElement(Sites))
 customElements.define('ve-statements', defineCustomElement(Statements))

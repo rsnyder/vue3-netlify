@@ -297,6 +297,7 @@
   // watch(entity, () => console.log(toRaw(entity.value)))
 
   onMounted(() => eid.value = props.eid || qid.value)
+  watch(qid, () => eid.value = qid.value)
   watch(props, () => eid.value = props.eid || qid.value)
 
   const translations = {}
