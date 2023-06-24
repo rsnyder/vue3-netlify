@@ -38,35 +38,39 @@
 
   const root = ref<HTMLElement | null>(null)
   const shadowRoot = computed(() => root?.value?.parentNode as HTMLElement)
-
   const isActive = computed(() => active.value.split('/').pop() === props.id)
-  watch(isActive, () => { if (isActive.value && !images.value.length) doQuery() })
 
-  watch(qid, () => {
+  const entity = ref<any>()
+  const commonsCategory = computed(() => entity.value?.claims.P373[0].mainsnak.datavalue.value.replace(/ /g,'_') )
+
+  watch(entity, () => {
     images.value = []
-    if (isActive.value) doQuery()
+    console.log(toRaw(entity.value))
+    if (isActive.value && !images.value.length) doQuery()
+    // if (entity.value?.claims.P373) doQuery()
   })
 
-  onMounted(() => { 
+  watch(isActive, async () => {
+    if (isActive.value && qid.value !== entity.value?.id) entity.value = await store.fetch(qid.value)
+  })
+
+  watch(qid, async () => { 
+    images.value = []
+    if (isActive.value) entity.value = await store.fetch(qid.value)
+  })
+
+  onMounted(async () => { 
     dialog = shadowRoot.value?.querySelector('.dialog')
     dialog.addEventListener('sl-hide', (evt:CustomEvent) => { if (evt.target === dialog) metadata.value = undefined })
-    if (isActive.value) doQuery() 
+    if (isActive.value) entity.value = await store.fetch(qid.value)
   })
+
+  watch(commonsCategory, () => { console.log(`cc.watch.commonsCategory: isActive=${isActive.value} qid=${qid.value} commonsCategory=${commonsCategory.value}`) })
 
   let dialog: any
   const dialogWidth = ref('80vw')
   const showDialog = ref(false)
   watch(showDialog, () => { dialog.open = showDialog.value })
-
-  interface ImageData {
-    id: string;
-    thumb: string;
-    alt: string;
-    width: number;
-    height: number;
-    createdBy: boolean;
-    depicts: any[];
-  }
 
   interface Image {
     aspect_ratio?: number
@@ -79,6 +83,7 @@
     foreign_landing_url?: string
     format?: string
     id: string
+    imageQualityAssessment?: string
     height?: number
     license?: string
     license_url?: string
@@ -118,35 +123,32 @@
   
   function doQuery() {
     images.value = []
-    // console.log(`tagged.doQuery: qid=${qid.value} isActive=${isActive.value}`)
-    Promise.all([
-      fetch(`/api/commons/wc/${qid.value}`),
-      fetch(`/api/commons/wd/${qid.value}`),
+    console.log(`tagged.doQuery: qid=${qid.value} commonsCategory=${commonsCategory.value} isActive=${isActive.value}`)
+    let promises = [
+      fetch(`/api/commons/${qid.value}`),
+      fetch(`/api/wikidata/${qid.value}`),
       fetch(`/api/atlas/${qid.value}`)
-    ]).then(async ([commons, wikidata, atlas]) => {
+    ]
+    if (commonsCategory.value) promises.push(fetch(`/api/commons-categories/${commonsCategory.value}`))
+    Promise.all(promises).then(async ([commons, wikidata, atlas, categories]) => {
       const commonsData = await commons.json()
       const wikidataData = await wikidata.json()
       const atlasData = await atlas.json()
-      console.log(commonsData)
-      console.log(atlasData)
-      images.value = [...atlasData, ...commonsData, ...wikidataData]
-        .map((item: any) => transformItem(item))
+      const categoriesData = categories ? await categories.json() : []
+      let all = scoreImages([...atlasData, ...commonsData, ...wikidataData, ...categoriesData])
         .sort((a: any, b: any) => b.score - a.score)
+      let ids = new Set()
+      let sources = {}
+      let deduped = all.filter(img => {
+        if (ids.has(img.id)) return false
+        ids.add(img.id)
+        if (!sources[img.source]) sources[img.source] = 0
+        sources[img.source]++
+        return true
+      })
+      console.log(sources)
+      images.value = deduped
     })
-  }
-
-  function transformItem(item: any): Image {
-    let doc: Image = {id: item.id, source: 'wc'}
-    doc.url = item.detail_url
-    if (item.label) doc.title = item.label
-    if (item.description) doc.description = item.description
-    if (item.license) doc.license = item.license
-    doc.url = item.url
-    doc.thumbnail = item.thumbnail
-    doc.width = item.width
-    doc.height = item.height
-    doc.aspect_ratio = item.aspect_ratio
-    return doc
   }
 
   async function getMetadata(id: string) {
@@ -155,6 +157,21 @@
 
   async function itemSelected(evt: CustomEvent) {
     metadata.value = await getMetadata(evt.detail[0].id)
+  }
+
+  function scoreImages(images) {
+    return images.map(img => {
+      img.score = 0
+      if (img.depicts) {
+        let depicted: any = Object.values(img.depicts).find((d:any) => d.id === qid.value)
+        if (depicted?.dro) img.score += 5
+        else if (depicted?.prominent) img.score += 2
+      }
+      if (img.imageQualityAssessment === 'featured') img.score += 3
+      else if (img.imageQualityAssessment === 'quality') img.score += 2
+      else if (img.imageQualityAssessment === 'valued') img.score += 1
+      return img
+    })
   }
 
 </script>

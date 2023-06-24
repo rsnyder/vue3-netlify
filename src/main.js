@@ -7,6 +7,7 @@ import { defineCustomElement } from 'vue'
 import './themes/juncture.css'
 
 import Claims from './components/Claims.ce.vue'
+import CommonsCategories from './components/CommonsCategories.ce.vue'
 import EntityCard from './components/EntityCard.ce.vue'
 import EntityHeader from './components/EntityHeader.ce.vue'
 import EntityInfoboxes from './components/EntityInfoboxes.ce.vue'
@@ -28,6 +29,7 @@ import WikidataImages from './components/WikidataImages.ce.vue'
 import WikidataSearch from './components/WikidataSearch.ce.vue'
 
 customElements.define('ve-claims', defineCustomElement(Claims))
+customElements.define('ve-commons-categories', defineCustomElement(CommonsCategories))
 customElements.define('ve-entity-card', defineCustomElement(EntityCard))
 customElements.define('ve-entity-header', defineCustomElement(EntityHeader))
 customElements.define('ve-entity-infoboxes', defineCustomElement(EntityInfoboxes))

@@ -23,7 +23,7 @@ export async function handler(event, context, callback) {
     const imagesDb = client.db('images')
     const depictsCollection = imagesDb.collection('depicts')
     const cursor = await depictsCollection.find({ depicts: qid })
-    const docs = await cursor.toArray()
+    const docs = (await cursor.toArray()).map(d => {d.source='atlas'; return d})
     return { statusCode: 200, body: JSON.stringify(docs)}
   } finally {
     await client.close()
