@@ -1,11 +1,14 @@
 const { Storage } = require('@google-cloud/storage')
 
+const client_email = process.env.GCP_CLIENT_EMAIL
+const private_key = process.env.GCP_PRIVATE_KEY.split('\\n').join('\n')
+
+console.log(`client_email=${client_email}`)
+console.log(`private_key=${private_key}`)
+
 const storage = new Storage({
   projectId: 'visual-essays',
-  credentials: {
-    client_email: process.env.GCP_CLIENT_EMAIL,
-    private_key: process.env.GCP_PRIVATE_KEY.split("\\n").join("\n")
-  }
+  credentials: { client_email, private_key }
 })
 
 const BUCKET_NAME = 'juncture-search'
@@ -21,7 +24,6 @@ async function readFilefromCloudStorage(qid) {
 
 async function writeFileToCloudStorage(qid, contents) { 
   try {
-    console.log(`process.env.GCP_CLIENT_EMAIL=${process.env.GCP_CLIENT_EMAIL}`)
     console.log('writing file', qid, contents)
     await storage.bucket(BUCKET_NAME).file(`${qid}.json`).save(JSON.stringify(contents))
   } catch(e) {
