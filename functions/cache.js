@@ -6,18 +6,10 @@ const private_key = process.env.GCP_PRIVATE_KEY.split('\\n').join('\n')
 console.log(`client_email=${client_email}`)
 console.log(`private_key=${private_key}`)
 
-const storage = new Storage({
-  projectId: 'visual-essays',
-  credentials: { client_email, private_key }
-})
-
 const BUCKET_NAME = 'juncture-search'
 
-async function fileExists(qid) {
-  return await storage.bucket(BUCKET_NAME).file(`${qid}.json`).exists()
-}
-
 async function readFilefromCloudStorage(qid) {
+  const storage = new Storage({projectId: 'visual-essays', credentials: { client_email, private_key } })
   const contents = await storage.bucket(BUCKET_NAME).file(`${qid}.json`).download()
   return JSON.parse(contents)
 }
@@ -25,6 +17,7 @@ async function readFilefromCloudStorage(qid) {
 async function writeFileToCloudStorage(qid, contents) { 
   try {
     console.log('writing file', `${BUCKET_NAME}/${qid}.json`, contents)
+    const storage = new Storage({projectId: 'visual-essays', credentials: { client_email, private_key } })
     await storage.bucket(BUCKET_NAME).file(`${qid}.json`).save(JSON.stringify(contents))
     console.log('writing file - success')
     return true
