@@ -27,7 +27,7 @@ export async function handler(event) {
       console.log('writing file', `${BUCKET_NAME}/${qid}.json`)
       try {
         const storage = new Storage({projectId: 'visual-essays', credentials: { client_email, private_key } })
-        await storage.bucket(BUCKET_NAME).file(`${qid}.json`).save(JSON.stringify(event.body))
+        await storage.bucket(BUCKET_NAME).file(`${qid}.json`).save(event.body)
         console.log('writing file - success')  
         return { statusCode: 200 }
       } catch(e) {
