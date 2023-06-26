@@ -24,11 +24,14 @@ async function readFilefromCloudStorage(qid) {
 
 async function writeFileToCloudStorage(qid, contents) { 
   try {
-    console.log('writing file', qid, contents)
+    console.log('writing file', `${BUCKET_NAME}/${qid}.json`, contents)
     await storage.bucket(BUCKET_NAME).file(`${qid}.json`).save(JSON.stringify(contents))
+    console.log('writing file - success')
+    return true
   } catch(e) {
     console.log('error writing file')
     console.log(e);
+    return false
  }
 }
 
@@ -46,11 +49,7 @@ export async function handler(event, context, callback) {
         return { statusCode: 404, body: e.toString() }
       }
     } else if (event.httpMethod === 'PUT') {
-      console.log('PUT', event.body)
-      writeFileToCloudStorage(qid, JSON.parse(event.body))
-      let statusCode = 201 // created
-      // let statusCode = 204 // no content
-      return { statusCode }
+      return { statusCode: writeFileToCloudStorage(qid, JSON.parse(event.body)) ? 200 : 500 }
     } else {
       return { statusCode: 405, body: 'Method Not Allowed' }
     }
