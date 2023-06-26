@@ -21,8 +21,11 @@ async function readFilefromCloudStorage(qid) {
 
 async function writeFileToCloudStorage(qid, contents) { 
   try {
+    console.log(`process.env.GCP_CLIENT_EMAIL=${process.env.GCP_CLIENT_EMAIL}`)
+    console.log('writing file', qid, contents)
     await storage.bucket(BUCKET_NAME).file(`${qid}.json`).save(JSON.stringify(contents))
   } catch(e) {
+    console.log('error writing file')
     console.log(e);
  }
 }
