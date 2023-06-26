@@ -17,28 +17,27 @@
     const data = <any>ref({})
     
     onMounted(async () => {
-      await getData()
-      await putData()
+      await putData({key: 'value'})
+      data.value = await getData()
     })
 
     async function getData() {
       console.log(`getData: qid=${qid.value}`)
       let resp = await fetch(`/api/cache/${qid.value}`)
       if (resp.status === 200) {
-        let json = await resp.json()
-        data.value = json
+        return await resp.json()
       } else if (resp.status === 404) {
         console.log(`getData: qid=${qid.value} not found`)
-        data.value = { qid }
+        return {}
       }
     }
 
-    async function putData() {
+    async function putData(obj:any) {
       console.log(`putData: qid=${qid.value}`)
       let resp = await fetch(`/api/cache/${qid.value}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(data.value)
+        body: JSON.stringify(obj)
       })
       console.log(resp)
     }

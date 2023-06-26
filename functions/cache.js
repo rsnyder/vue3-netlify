@@ -15,9 +15,8 @@ export async function handler(event) {
       try {
         const storage = new Storage({projectId: 'visual-essays', credentials: { client_email, private_key } })
         const contents = await storage.bucket(BUCKET_NAME).file(`${qid}.json`).download()
-        return { statusCode: 200, body: JSON.stringify(contents) }
+        return { statusCode: 200, body: JSON.parse(contents) }
       } catch(e) {
-        console.log('error reading file')
         console.log(e);
         return { statusCode: 404, body: e.toString() }
       }
@@ -27,11 +26,9 @@ export async function handler(event) {
       console.log('writing file', `${BUCKET_NAME}/${qid}.json`)
       try {
         const storage = new Storage({projectId: 'visual-essays', credentials: { client_email, private_key } })
-        await storage.bucket(BUCKET_NAME).file(`${qid}.json`).save(event.body)
-        console.log('writing file - success')  
-        return { statusCode: 200 }
+        await storage.bucket(BUCKET_NAME).file(`${qid}.json`).save(JSON.stringify(event.body))
+        return { statusCode: 201 }
       } catch(e) {
-        console.log('error writing file')
         console.log(e);
         return { statusCode: 500 }
       }
