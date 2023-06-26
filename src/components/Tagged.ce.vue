@@ -115,6 +115,12 @@
     // console.log(`distinct=${distinct.size} depicts=${numDepicts} createdBy=${numCreatedBy}`)
 
     end.value = Math.min(50, images.value.length)
+    if (images.value.length)
+      fetch(`/api/cache/${qid.value}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(images.value)
+        })
   })
   
   const end = ref(0)
@@ -130,8 +136,14 @@
   const metadata = ref()
   watch(metadata, () => { showDialog.value = metadata.value !== undefined })
   
-  function doQuery() {
+  async function doQuery() {
     images.value = []
+    let cachedResults = await fetch(`/api/cache/${qid.value}`)
+    console.log(`fromCache=${cachedResults.ok}`)
+    if (cachedResults.ok) {
+      images.value = await cachedResults.json()
+      return
+    }
     // console.log(`tagged.doQuery: qid=${qid.value} commonsCategory=${commonsCategory.value} isActive=${isActive.value}`)
     let promises = [
       fetch(`/api/commons/${qid.value}`),

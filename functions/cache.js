@@ -17,13 +17,12 @@ export async function handler(event) {
         const contents = await storage.bucket(BUCKET_NAME).file(`${qid}.json`).download()
         return { statusCode: 200, body: JSON.parse(contents) }
       } catch(e) {
-        console.log(e);
+        // console.log(e);
         return { statusCode: 404, body: e.toString() }
       }
     
     } else if (event.httpMethod === 'PUT') {
       
-      console.log('writing file', `${BUCKET_NAME}/${qid}.json`)
       try {
         const storage = new Storage({projectId: 'visual-essays', credentials: { client_email, private_key } })
         await storage.bucket(BUCKET_NAME).file(`${qid}.json`).save(JSON.stringify(event.body))
