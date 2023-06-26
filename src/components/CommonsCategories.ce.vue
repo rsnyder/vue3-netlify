@@ -34,21 +34,21 @@
 
   const isActive = computed(() => active.value.split('/').pop() === props.id)
   watch(isActive, async () => {
-    console.log(`cc.watch.isActive=${isActive.value} qid=${qid.value}`)
+    // console.log(`cc.watch.isActive=${isActive.value} qid=${qid.value}`)
     if (isActive.value && qid.value !== entity.value?.id) entity.value = await store.fetch(qid.value)
   })
   
   onMounted(async () => {
-    console.log(`cc.onMounted: isActive=${isActive.value} qid=${qid.value}`)
+    // console.log(`cc.onMounted: isActive=${isActive.value} qid=${qid.value}`)
     if (isActive.value) entity.value = await store.fetch(qid.value)
   })
   watch(qid, async () => { 
-    console.log(`cc.watch.qid: isActive=${isActive.value} qid=${qid.value}`)
+    // console.log(`cc.watch.qid: isActive=${isActive.value} qid=${qid.value}`)
     if (isActive.value) entity.value = await store.fetch(qid.value)
   })
   const entity = ref<any>()
   watch(entity, () => {
-    console.log(toRaw(entity.value))
+    // console.log(toRaw(entity.value))
     if (entity.value?.claims.P373) doQuery()
   })
 

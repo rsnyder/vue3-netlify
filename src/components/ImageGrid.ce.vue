@@ -215,16 +215,21 @@
       imageCardEl.setAttribute('data-id', image.id)
       imageCardEl.addEventListener('click', () => emit('item-selected', image))
 
-      let imgEl = document.createElement('img')
-      imgEl.src = image.thumbnail
-      imgEl.style.width = `calc(100% - ${padding * 2}px)`
+      // let imgEl = document.createElement('img')
+      // imgEl.src = image.thumbnail
+      // imgEl.style.width = `calc(100% - ${padding * 2}px)`
+      // imageCardEl.appendChild(imgEl)
+
+      let imgEl = document.createElement('div')
+      imgEl.className = 'img'
+      imgEl.style.backgroundImage = `url('${image.thumbnail.replace(/'/g, '%27')}')`
       imageCardEl.appendChild(imgEl)
 
       let textEl = document.createElement('div')
       textEl.className = 'text'
       let textItems:string[] = []
-      textItems.push(`<div>${idx + i + 1}</div>`)
-      if (image.id) textItems.push(`<div>${image.id}</div>`)
+      textItems.push(`<div>${idx + i + 1}: ${image.id}</div>`)
+      textItems.push(`<div>${image.width} x ${image.height} (${image.aspect_ratio})</div>`)
       if (image.title) textItems.push(`<div class="clamp">${image.title}</div>`)
       // if (image.width) textItems.push(`<p>${image.width.toLocaleString()} x ${image.height.toLocaleString()} ${image.mime.split('/').pop()}</p>`)
       // if (image.score) textItems.push(`<p>Score: ${image.score}</p>`)
@@ -250,6 +255,8 @@
 
   .image-card {
     font-size: 0.85em;
+    display: flex;
+    flex-direction: column;
   }
 
   .clamp {
@@ -270,4 +277,11 @@
     padding: 0;
   }
 
+  .img {
+    width: 100%;
+    height: 200px;
+    background-position: center;
+    background-repeat: no-repeat;
+    background-size: cover;
+  }
 </style>

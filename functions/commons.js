@@ -29,7 +29,8 @@ const SPARQL = `
     OPTIONAL { ?image (schema:height | wdt:P2048) ?height . }
     OPTIONAL { ?image wdt:P6243 ?dro . }
     OPTIONAL { ?image wdt:P6731 ?quality . }
-  }`
+  }
+  LIMIT 2000`
 
 export async function handler(event) {
   

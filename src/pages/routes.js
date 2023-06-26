@@ -1,17 +1,14 @@
 import {createRouter} from 'vue-router'
 import Home from './Home.vue';
 import Entity from './Entity.vue';
-import Shoelace from './Shoelace.vue';
-import ImageGrid from './ImageGrid.vue';
+import Cache from './cache.vue';
 
 const routes = [
   { name: 'home', path: '/', component: Home },
 
-  { name: 'shoelace', path: '/shoelace/', component: Shoelace },
-
   { name: 'entity', path: '/entity/:qid', component: Entity },
 
-  { name: 'image-grid', path: '/image-grid/', component: ImageGrid },
+  { name: 'cache', path: '/cache/:qid', component: Cache },
 
 ]
 

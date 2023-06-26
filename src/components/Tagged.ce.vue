@@ -2,6 +2,7 @@
 
   <div ref="root">
     <span v-html="props.label" class="title"></span> <span v-if="images" class="count">({{ images?.length.toLocaleString() }})</span>
+    <!--
     <ve-image-grid 
       id="wc"
       :active="isActive"
@@ -10,6 +11,15 @@
       @get-next="getNext" 
       @item-selected="itemSelected" 
     ></ve-image-grid>
+    -->
+    <ve-pig 
+      id="wc"
+      :active="isActive"
+      :total="images?.length || 0" 
+      :items="showing" 
+      @get-next="getNext" 
+      @item-selected="itemSelected" 
+    ></ve-pig>
   </div>
 
   <sl-dialog :label="label" class="dialog" :style="{'--width':dialogWidth}">
@@ -45,7 +55,6 @@
 
   watch(entity, () => {
     images.value = []
-    console.log(toRaw(entity.value))
     if (isActive.value && !images.value.length) doQuery()
     // if (entity.value?.claims.P373) doQuery()
   })
@@ -65,7 +74,7 @@
     if (isActive.value) entity.value = await store.fetch(qid.value)
   })
 
-  watch(commonsCategory, () => { console.log(`cc.watch.commonsCategory: isActive=${isActive.value} qid=${qid.value} commonsCategory=${commonsCategory.value}`) })
+  // watch(commonsCategory, () => { console.log(`tagged.watch.commonsCategory: isActive=${isActive.value} qid=${qid.value} commonsCategory=${commonsCategory.value}`) })
 
   let dialog: any
   const dialogWidth = ref('80vw')
@@ -105,12 +114,12 @@
     // let numDepicts = images.value.reduce((acc, cur) => acc + (cur.depicts.find(depicted => qid.value === depicted.id) ? 1 : 0), 0)
     // console.log(`distinct=${distinct.size} depicts=${numDepicts} createdBy=${numCreatedBy}`)
 
-    end.value = Math.min(20, images.value.length)
+    end.value = Math.min(50, images.value.length)
   })
   
   const end = ref(0)
   function getNext() {
-    end.value = Math.min(end.value + 20, images.value.length)
+    end.value = Math.min(end.value + 50, images.value.length)
   }
 
   const showing = computed(() => images.value.slice(0, end.value))
@@ -123,7 +132,7 @@
   
   function doQuery() {
     images.value = []
-    console.log(`tagged.doQuery: qid=${qid.value} commonsCategory=${commonsCategory.value} isActive=${isActive.value}`)
+    // console.log(`tagged.doQuery: qid=${qid.value} commonsCategory=${commonsCategory.value} isActive=${isActive.value}`)
     let promises = [
       fetch(`/api/commons/${qid.value}`),
       fetch(`/api/wikidata/${qid.value}`),
@@ -135,6 +144,7 @@
       const wikidataData = await wikidata.json()
       const atlasData = await atlas.json()
       const categoriesData = categories ? await categories.json() : []
+      console.log(toRaw(atlasData))
       let all = scoreImages([...atlasData, ...commonsData, ...wikidataData, ...categoriesData])
         .sort((a: any, b: any) => b.score - a.score)
       let ids = new Set()
