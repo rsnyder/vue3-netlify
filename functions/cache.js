@@ -24,10 +24,10 @@ export async function handler(event) {
     
     } else if (event.httpMethod === 'PUT') {
       
-      console.log('writing file', `${BUCKET_NAME}/${qid}.json`, contents)
+      console.log('writing file', `${BUCKET_NAME}/${qid}.json`)
       try {
         const storage = new Storage({projectId: 'visual-essays', credentials: { client_email, private_key } })
-        await storage.bucket(BUCKET_NAME).file(`${qid}.json`).save(JSON.stringify(contents))
+        await storage.bucket(BUCKET_NAME).file(`${qid}.json`).save(JSON.stringify(event.body))
         console.log('writing file - success')  
         return { statusCode: 200 }
       } catch(e) {
