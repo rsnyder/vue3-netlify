@@ -248,9 +248,9 @@ export class Pig {
     }
 
     addImages(imageData: any[]) {
-      this.images = this.images.concat(this._parseImageData(imageData))
+      this.images = this.images.concat(this._parseImageData(imageData, this.images.length))
       this._computeLayout()
-      console.log(`addImages: ${imageData.length} => ${this.images.length}`)
+      // console.log(`addImages: ${imageData.length} => ${this.images.length}`)
     }
 
     _getTransitionTimeout() {
@@ -276,11 +276,11 @@ export class Pig {
       }
     }
 
-    _parseImageData(imageData: any[]) {
+    _parseImageData(imageData: any[], offset=0) {
       const progressiveImages: ProgressiveImage[] = [];
 
       imageData.forEach(function(image, index) {
-        const progressiveImage = new ProgressiveImage(image, index, this);
+        const progressiveImage = new ProgressiveImage(image, offset+index, this);
         progressiveImages.push(progressiveImage);
       }.bind(this));
 
@@ -368,7 +368,7 @@ export class Pig {
           // Reset our state variables for next row.
           row = [];
           rowAspectRatio = 0;
-          translateY += rowHeight + this.settings.spaceBetweenImages;
+          translateY += rowHeight + this.settings.spaceBetweenImages + 50;
           translateX = 0;
         }
       }.bind(this));
@@ -427,45 +427,33 @@ export class Pig {
       }
     }
 
-    _getOnScroll() {
-      const _this = this;
-
-      /**
-       * This function is called on scroll. It computes variables about the page
-       * position and scroll direction, and then calls a _doLayout guarded by a
-       * window.requestAnimationFrame.
-       *
-       * We use the boolean variable _this.inRAF to ensure that we don't overload
-       * the number of layouts we perform by starting another layout while we are
-       * in the middle of doing one.
-       */
-      const onScroll = function() {
-        // Compute the scroll direction using the latestYOffset and the
-        // previousYOffset
-        const newYOffset = _this.scroller === window ? window.pageYOffset : _this.scroller.scrollTop;
-        _this.previousYOffset = _this.latestYOffset || newYOffset;
-        _this.latestYOffset = newYOffset;
-        _this.scrollDirection = (_this.latestYOffset > _this.previousYOffset) ? 'down' : 'up';
-  
-        // Call _this.doLayout, guarded by window.requestAnimationFrame
-        if (!_this.inRAF) {
-          _this.inRAF = true;
-          window.requestAnimationFrame(function() {
-            _this._doLayout();
-            _this.inRAF = false;
-          });
+    enable() {  
+      let time = Date.now();
+      const wait = 100;
+      const _this = this
+      function throttledScrollHandler() {
+        if ((time + wait - Date.now()) < 0) {
+          // Compute the scroll direction using the latestYOffset and the
+          // previousYOffset
+          const newYOffset = _this.scroller === window ? window.pageYOffset : _this.scroller.scrollTop
+          _this.previousYOffset = _this.latestYOffset || newYOffset
+          _this.latestYOffset = newYOffset
+          _this.scrollDirection = (_this.latestYOffset > _this.previousYOffset) ? 'down' : 'up'
+    
+          // Call _this.doLayout, guarded by window.requestAnimationFrame
+          if (!_this.inRAF) {
+            _this.inRAF = true
+            window.requestAnimationFrame(function() {
+              _this._doLayout()
+              _this.inRAF = false
+            });
+          }
+          time = Date.now()
         }
-      };
+      }
+      this.scroller.addEventListener('scroll', throttledScrollHandler);
   
-      return onScroll;
-    };
-  
-    enable() {
-      this.onScroll = this._getOnScroll();
-  
-      this.scroller.addEventListener('scroll', this.onScroll);
-  
-      this.onScroll();
+      // this.onScroll();
       this._computeLayout();
       this._doLayout();
   
@@ -481,8 +469,10 @@ export class Pig {
     disable() {
       this.scroller.removeEventListener('scroll', this.onScroll);
       optimizedResize.disable();
+      this.container.querySelectorAll('figure').forEach((el) => el.remove())
       return this;
     }
+
 }
 
 
@@ -491,10 +481,15 @@ export class ProgressiveImage {
   aspectRatio: number;
   filename: string;
   index: number;
+  logo: string;
+  width: number;
+  height: number;
+  format: string;
   pig: any;
   classNames: any;
   thumbnail: any;
   fullImage: any;
+  license: string;
   element: any;
   style: any;
 
@@ -502,13 +497,19 @@ export class ProgressiveImage {
 
   // Constructor to initialize the progressive image
   constructor(singleImageData: any, index: number, pig: any) {
+    // console.log(singleImageData)
     // True if the element exists on the page
     this.existsOnPage = false;
 
     // Instance information
+    this.width = singleImageData.width;
+    this.height = singleImageData.height;
+    this.format = singleImageData.format;
     this.aspectRatio = singleImageData.aspect_ratio;
     this.filename = singleImageData.file;
     this.thumbnailSrc = singleImageData.thumbnail;
+    this.logo = singleImageData.logo;
+    this.license = singleImageData.license_code;
     this.index = index;
 
     // The Pig instance
@@ -535,8 +536,8 @@ export class ProgressiveImage {
       if (!this.existsOnPage) {
         return;
       }
-
       // Add thumbnail to the element if not present already
+      /*
       if (!this.thumbnail) {
         this.thumbnail = new Image();
         // this.thumbnail.src = this.pig.settings.urlForSize(this.filename, this.pig.settings.thumbnailSize);
@@ -549,8 +550,10 @@ export class ProgressiveImage {
         };
         this.getElement().appendChild(this.thumbnail);
       }
+      */
 
       // Add full image to the element if not present already
+      
       if (!this.fullImage) {
         this.fullImage = new Image();
         // this.fullImage.src = this.pig.settings.urlForSize(this.filename, this.pig.settings.getImageSize(this.pig.lastWindowWidth));
@@ -560,8 +563,9 @@ export class ProgressiveImage {
             this.fullImage.className += ' ' + this.classNames.loaded;
           }
         };
-        this.getElement().appendChild(this.fullImage);
-      }
+        // this.getElement().appendChild(this.fullImage);
+        let el = this.getElement()
+        el.insertBefore(this.fullImage, el.firstChild);      }
 
     }, 100);
   }
@@ -592,15 +596,41 @@ export class ProgressiveImage {
   // Method to get the element
   getElement() {
     if (!this.element) {
-      this.element = document.createElement(this.pig.settings.figureTagName);
+      this.element = document.createElement('div');
       this.element.className = this.classNames.figure;
-      if (this.pig.settings.onClickHandler !== null) {
-        this.element.addEventListener('click', () => {
-          this.pig.settings.onClickHandler(this.filename);
-        });
+      // let figure = document.createElement(this.pig.settings.figureTagName);
+      // this.element.appendChild(figure);
+      // figure.className = this.classNames.figure;
+      this.fullImage = new Image();
+        // this.fullImage.src = this.pig.settings.urlForSize(this.filename, this.pig.settings.getImageSize(this.pig.lastWindowWidth));
+        this.fullImage.src = this.thumbnailSrc;
+        this.fullImage.onload = () => {
+          if (this.fullImage) {
+            this.fullImage.className += ' ' + this.classNames.loaded;
+          }
+        };
+        this.getElement().appendChild(this.fullImage)
+        let figcaption = document.createElement('div')
+        figcaption.className = 'caption'
+        
+        let title = document.createElement('div')
+        title.className = 'title'
+        title.innerHTML = `<img src=${this.logo}> <span>${this.index}</span> <span class="clamp">${this.license}</span>`
+        figcaption.appendChild(title)
+
+        let size = document.createElement('div')
+        size.className = 'size clamp'
+        size.innerHTML = `${this.width.toLocaleString()} x ${this.height.toLocaleString()} ${this.format?.split('/').pop()?.toUpperCase()}`
+        figcaption.appendChild(size)
+
+        this.element.appendChild(figcaption)
+        if (this.pig.settings.onClickHandler !== null) {
+          this.element.addEventListener('click', () => {
+            this.pig.settings.onClickHandler(this.index);
+          });
+        }
+        this._updateStyles();
       }
-      this._updateStyles();
-    }
 
     return this.element;
   }
@@ -609,7 +639,7 @@ export class ProgressiveImage {
   _updateStyles() {
     this.getElement().style.transition = this.style.transition;
     this.getElement().style.width = this.style.width + 'px';
-    this.getElement().style.height = this.style.height + 'px';
+    this.getElement().style.height = this.style.height + 50 + 'px';
     this.getElement().style.transform = (
       'translate3d(' + this.style.translateX + 'px,' +
       this.style.translateY + 'px, 0)');

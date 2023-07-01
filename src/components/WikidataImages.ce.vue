@@ -2,7 +2,13 @@
 
   <div ref="root">
     <span v-html="props.label" class="title"></span> <span v-if="images" class="count">({{ images?.length.toLocaleString() }})</span>
-    <ve-image-grid  id="wd" :items="images" :active="isActive"></ve-image-grid>
+    <!--<ve-image-grid  id="wd" :items="images" :active="isActive"></ve-image-grid> -->
+    <ve-pig 
+      id="wc"
+      :active="isActive"
+      :total="images?.length || 0" 
+      :items="images"
+    ></ve-pig>
   </div>
 
   <sl-dialog :label="label" class="dialog" :style="{'--width':dialogWidth}">
@@ -80,7 +86,7 @@
   
   function doQuery() {
     // console.log('wd.doQuery')
-    fetch(`/api/commons/wd/${qid.value}`)
+    fetch(`/api/wikidata/${qid.value}`)
       .then(resp => resp.json())
       .then(data => allImages.value = data)
   }

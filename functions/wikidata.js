@@ -16,7 +16,7 @@ async function initSession() {
 }
 
 const SPARQL = `
-  SELECT ?image ?item ?label ?createdby ?depicts ?description ?url ?mime ?width ?height ?dro ?quality ?rank WITH {
+  SELECT ?image ?item ?label ?createdby ?depicts ?description ?url ?mime ?width ?height ?dro ?quality ?rank ?copyright ?license WITH {
     SELECT * {
       SERVICE <https://query.wikidata.org/sparql> {
         ?item (wdt:P170 | wdt:P180) wd:{{qid}};
@@ -24,6 +24,7 @@ const SPARQL = `
                schema:description ?description .
         FILTER (lang(?label) = "en")
         FILTER (lang(?description) = "en")
+        OPTIONAL { ?item wdt:P6216 ?copyright . }
       }
     } 
   } AS %items WHERE {
@@ -38,6 +39,7 @@ const SPARQL = `
     OPTIONAL { ?image (schema:height | wdt:P2048) ?height . }
     OPTIONAL { ?image wdt:P6243 ?dro . }
     OPTIONAL { ?image wdt:P6731 ?quality . }
+    OPTIONAL { ?image wdt:P275 ?license . }
   }`
 
 export async function handler(event) {
@@ -46,7 +48,7 @@ export async function handler(event) {
 
   const qid = event.path.split('/').filter(pe => pe).pop()
   let query = SPARQL.replace(/{{qid}}/g, qid).trim()
-
+  // console.log(query)
   let resp = await fetch(cookieJar, `https://commons-query.wikimedia.org/sparql?query=${encodeURIComponent(query)}`, {
     headers: { Accept: 'application/sparql-results+json'}
   })
@@ -70,6 +72,10 @@ export async function handler(event) {
       file,
       depicts: {}
     }
+    data[id].copyright = b.copyright?.value
+      ? b.copyright.value.split('/').pop() === 'Q50423863' ? 'true' : 'false'
+      : 'unknown'
+    data[id].license = b.license?.value || data[id].copyright === 'false' ? 'PD' : 'unknown'
     if (b.label?.value) data[id].title = b.label.value
     if (b.description?.value) data[id].description = b.description.value
     if (b.createdby) data[id].createdBy = true

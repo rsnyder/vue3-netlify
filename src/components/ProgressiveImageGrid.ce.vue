@@ -2,16 +2,26 @@
 
   <div ref="root" id="image-grid"></div>
 
+  <sl-dialog :label="`${selectedImage?.id}: ${selectedImage?.title}`" class="dialog" :style="{'--width':dialogWidth}">
+    <div>
+      <a :href="selectedImage?.detail_url" target="_blank" v-html="selectedImage?.detail_url"></a>
+      <pre>{{ JSON.stringify(selectedImage, null, 2) }}</pre>
+    </div>
+    <sl-button slot="footer" variant="primary" @click="selectedImage = null">Close</sl-button>
+  </sl-dialog>
+
 </template>
 
 <script setup lang="ts">
 
   import { computed, nextTick, onMounted, ref, toRaw, watch } from 'vue'
+  import '@shoelace-style/shoelace/dist/components/dialog/dialog.js'
   import { Pig } from '../pig'
 
   const emit = defineEmits(['item-selected', 'get-next'])
-
+ 
   const props = defineProps({
+    total: { type: Number, default: 0 },
     items: { type: Array, default: () => [] },
     id: { type: String },
     active: { type: Boolean, default: true }
@@ -37,6 +47,7 @@
     license?: string
     license_url?: string
     license_version?: string
+    logo?: string
     provider?: string
     score?: number
     source?: string
@@ -49,43 +60,56 @@
 
   const root = ref<HTMLElement | null>(null)
   const shadowRoot = computed(() => root?.value?.parentNode)
-  const grid = computed(() => shadowRoot.value?.querySelector('#image-grid') as HTMLElement)
-  const gridWidth = ref<number>(0)
 
   const isActive = ref(props.active)
 
+  const selectedImage = <any>ref(null)
+  watch(selectedImage, () => showDialog.value = selectedImage.value !== null )
+
+  let dialog: any
+  const dialogWidth = ref('80vw')
+  const showDialog = ref(false)
+  watch(showDialog, () => { dialog.open = showDialog.value })
+
   let pig
+  function initPig() {
+    if (pig) return
+    pig = new Pig(imageData.value, {
+      container: shadowRoot.value?.querySelector('#image-grid') as HTMLElement,
+      loadMoreCallback: () => { emit('get-next') },
+      onClickHandler: imageSelected
+    }).enable()
+  }
 
   const imageData = <any>ref(props.items)
   watch(imageData, async (current, prior) => {
-    // console.log(`pig.watch.imageData: size=${current.length}`)
-    if (imageData.value.length === 0) return
+    console.log(`ProgressiveImageGrid.watch.imageData: size=${current.length}`)
+    if (imageData.value.length === 0) {
+      if (pig) pig.disable()
+      pig = null
+      return
+    }
     
     let added = imageData.value.slice(prior?.length || 0, imageData.value.length)
     await checkImagesSizes(added)
 
-    if (pig) {
-      pig.addImages(added)
-    } else {
-      pig = new Pig(imageData.value, {
-        container: shadowRoot.value?.querySelector('#image-grid') as HTMLElement,
-        loadMoreCallback: () => { emit('get-next') }
-      }).enable()
-    }
-    
+    if (pig) pig.addImages(added)
+    else initPig()
   })
 
+  function imageSelected(index:number) {
+    selectedImage.value = imageData.value[index]
+  }
+
   onMounted(() => { 
-    console.log(`pig.onMounted: isActive=${isActive.value} images=${imageData.value.length}`)
+    // console.log(`ProgressiveImageGrid.onMounted: isActive=${isActive.value} images=${imageData.value.length}`)
+    dialog = shadowRoot.value?.querySelector('.dialog')
+    dialog.addEventListener('sl-hide', (evt:CustomEvent) => showDialog.value = false )
+    if (isActive.value && imageData.value.length > 0) initPig()
   })
 
   watch(isActive, () => {
-    console.log(`pig.watch.isActive: isActive=${isActive.value} images=${imageData.value.length}`)
-  })
-
-  watch(grid, () => {
-    gridWidth.value = grid.value?.clientWidth
-    console.log(`pig.watch.grid: width=${gridWidth.value} isActive=${isActive.value} images=${imageData.value.length}`)
+    // console.log(`ProgressiveImageGrid.watch.isActive: isActive=${isActive.value} images=${imageData.value.length}`)
   })
 
   async function checkImagesSizes(images:Image[]) {
@@ -94,7 +118,6 @@
       .filter((image:any) => !image.width)
       .map((image:any) => getImageSize(image))
 
-    // console.log(`pig.checkImagesSizes: ${promises.length} images`)
     if (promises.length) {
       let results = await Promise.all(promises)
       results.forEach((result:any) => {
@@ -133,6 +156,8 @@
   }
 
   .pig-figure {
+    display: flex;
+    flex-direction: column;
     background-color: #D5D5D5;
     overflow: hidden;
     left: 0;
@@ -141,11 +166,16 @@
     margin: 0;
   }
 
+  .pig-figure:hover {
+    cursor: pointer;
+    box-shadow: rgba(50, 50, 93, 0.25) 0px 6px 12px -2px, rgba(0, 0, 0, 0.3) 0px 3px 7px -3px;
+  }
+
   .pig-figure img {
     left: 0;
-    position: absolute;
+    /* position: absolute; */
     top: 0;
-    height: 100%;
+    /* height: 100%; */
     width: 100%;
     opacity: 0;
     transition: 0.5s ease opacity;
@@ -164,12 +194,43 @@
     opacity: 1;
   }
 
+  .pig-figure .caption {
+    height: 50px;
+    background-color: white;
+    z-index: 1;
+    padding: 6px 3px 3px 3px;
+  }
+
+  .pig-figure .caption {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    height: 50px;
+    background-color: white;
+    z-index: 1;
+  }
+
   .image-card {
     font-size: 0.85em;
     display: flex;
     flex-direction: column;
   }
 
+  .title {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 0.9em;
+  }
+
+  .title img {
+    width: 16px;
+    opacity: 1;
+  }
+
+  .size {
+    font-size: 0.8em;
+  }
   .clamp {
     display: -webkit-box;
     -webkit-line-clamp: 1;

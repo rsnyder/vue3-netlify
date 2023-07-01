@@ -1,40 +1,105 @@
-import fetch from 'node-fetch'
-import { mwImage, mwUrlHash } from './mw-utils'
+import { fetch, CookieJar } from 'node-fetch-cookies'
+import { mwImage, commonsImageQualityAssessment } from './mw-utils'
 
-const imageExtensions = new Set('jpg jpeg png gif svg tif tiff'.split(' '))
+const cookieJar = new CookieJar()
+
+function wcqsSessionToken() {
+  return cookieJar.cookies.get('commons-query.wikimedia.org')?.get('wcqsSession').value
+}
+
+async function initSession() {
+  console.log('Initializing Wikimedia Commons Query Service session')
+  await fetch(cookieJar, 'https://commons-query.wikimedia.org', {
+    credentials: 'include',
+    headers: { Cookie: `wcqsOauth=${process.env.WCQS_OAUTH_TOKEN};` }
+  })
+}
+
+const SPARQL = `
+  SELECT DISTINCT ?image ?label ?description ?url ?createdby ?license ?coords ?depicts ?rank ?dro ?quality ?width ?height ?mime WHERE { 
+    VALUES (?image) { {{ENTITY-IDS}} }
+    ?image schema:url ?url .
+    OPTIONAL { ?image rdfs:label ?label. }
+    OPTIONAL { ?image schema:description ?description. }
+    OPTIONAL { ?image p:P170 ?createdby. }
+    OPTIONAL { ?image wdt:P275 ?license . }
+    OPTIONAL { ?image (wdt:P1259 | wdt:P625) ?coords . }
+    OPTIONAL { ?image p:P180 [ps:P180 ?depicts; wikibase:rank ?rank] .}
+    ?image (schema:encodingFormat | wdt:P1163) ?mime .
+    FILTER(?mime IN ('image/jpeg', 'image/png')) .
+    OPTIONAL { ?image (schema:width | wdt:P2049) ?width . }
+    OPTIONAL { ?image (schema:height | wdt:P2048) ?height . }
+    OPTIONAL { ?image wdt:P6243 ?dro . }
+    OPTIONAL { ?image wdt:P6731 ?quality . }
+  }
+  LIMIT 2000`
+
 
 export async function handler(event) {
   
+  if (!wcqsSessionToken()) await initSession()
+
   const category = event.path.split('/').filter(pe => pe).pop()
 
   let categoryImagesContinue = ''
-  let collector = []
+  let pageids = []
   while (categoryImagesContinue !== undefined) {
-    let resp = await fetch(`https://commons.wikimedia.org/w/api.php?origin=*&action=query&generator=categorymembers&gcmlimit=500&gcmtitle=Category:${category.replace(/ /,'_')}&format=json&gcmnamespace=6&gcmtype=file&prop=imageinfo&iiprop=url&gcmcontinue=${categoryImagesContinue}`)
+    let resp = await fetch(cookieJar, `https://commons.wikimedia.org/w/api.php?origin=*&action=query&generator=categorymembers&gcmlimit=500&gcmtitle=Category:${category.replace(/ /,'_')}&format=json&gcmnamespace=6&gcmtype=file&prop=imageinfo&iiprop=url&gcmcontinue=${categoryImagesContinue}`)
     if (!resp.ok) return { statusCode: resp.status, body: resp.statusText }
       
     resp = await resp.json()
     categoryImagesContinue = resp.continue?.gcmcontinue
-    let batch = Object.fromEntries(Object.values(resp.query.pages).map(page => {
-      // console.log(page)
-      let pageid = page.pageid
-      let id = mwUrlHash(page.imageinfo[0].descriptionurl)
-      let docid = page.title.replace(/File/,'commons')
-      let url = page.imageinfo[0].descriptionurl
-      return [pageid, {id, docid, pageid, url}]
-    }))
-    collector = [...collector, ...Object.values(batch)] 
+    
+    let batchPageids = Object.keys(resp.query.pages)
+    pageids = [...pageids, ...batchPageids] 
   }
-  let images = collector
-    .filter(item => imageExtensions.has(item.url.split('.').pop().toLowerCase()))
-    .map(item => transformItem(item))
 
-  return { statusCode: 200, body: JSON.stringify(images)}
+  let entityIds = pageids.map(pageid => `(sdc:M${pageid})`).join(' ')
+  let query = SPARQL.replace(/\{\{ENTITY-IDS\}\}/, entityIds)
+  // console.log(query)
 
-}
+  let resp = await fetch(cookieJar, 'https://commons-query.wikimedia.org/sparql', {
+    method: 'POST', body: `query=${encodeURIComponent(query)}`, 
+    headers: { Accept: 'application/sparql-results+json', 'Content-Type': 'application/x-www-form-urlencoded' }
+  })
 
-function transformItem(item) {
-  let doc = {id: item.id, source: 'cc'}
-  doc.thumbnail = mwImage(item.url, 300)
-  return doc
+  if (!resp.ok) return { statusCode: resp.status, body: resp.statusText }
+
+  resp = await resp.json()
+  let data = {}
+  resp.results.bindings.map(b => {
+
+    let id = b.image.value.split('/').pop()
+    let file = decodeURIComponent(b.url.value.split('/').pop())
+    if (!data[id]) data[id] = {
+      id,
+      detail_url: `https://commons.wikimedia.org/wiki/File:${file.replace(/ /g, '_').replace(/\?/g,'%3F')}`,
+      source: 'cc',
+      thumbnail: mwImage(file, 300),
+      width: parseInt(b.width.value),
+      height: parseInt(b.height.value),
+      aspect_ratio: Number((parseInt(b.width.value)/parseInt(b.height.value)).toFixed(4)),
+      format: b.mime.value,
+      file,
+      depicts: {}
+    }
+
+    if (b.license?.value) data[id].license = b.license.value
+    if (b.coords?.value) data[id].coords = b.coords.value.replace(/Point\(/, '').replace(/\)/, '').split(' ').map(c => Number(c).toFixed(4))
+    if (b.label?.value) data[id].title = b.label.value
+    if (b.description?.value) data[id].description = b.description.value
+    if (b.createdby) data[id].createdBy = true
+    if (b.quality?.value) data[id].imageQualityAssessment = commonsImageQualityAssessment[b.quality.value.split('/').pop()]
+
+    let depicted = b.depicts?.value.split('/').pop()
+    if (depicted) {
+      data[id].depicts[depicted] = { id: depicted }
+      if (b.rank?.value.split('#').pop().replace('Rank', '') === 'Preferred') data[id].depicts[depicted].prominent = true
+      if (b.dro?.value.split('/').pop() === depicted) data[id].depicts[depicted].dro = true
+    }
+
+  })
+  
+  return { statusCode: 200, body: JSON.stringify(Object.values(data))}
+
 }

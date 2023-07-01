@@ -16,12 +16,14 @@ async function initSession() {
 }
 
 const SPARQL = `
-  SELECT DISTINCT ?image ?label ?description ?url ?createdby ?depicts ?rank ?dro ?quality ?width ?height ?mime WHERE { 
+  SELECT DISTINCT ?image ?label ?description ?url ?createdby ?license ?coords ?depicts ?rank ?dro ?quality ?width ?height ?mime WHERE { 
     ?image (wdt:P170 | wdt:P180) wd:{{qid}}; 
           schema:url ?url .
     OPTIONAL { ?image rdfs:label ?label. }
     OPTIONAL { ?image schema:description ?description. }
     OPTIONAL { ?image p:P170 ?createdby. }
+    OPTIONAL { ?image wdt:P275 ?license . }
+    OPTIONAL { ?image (wdt:P1259 | wdt:P625) ?coords . }
     OPTIONAL { ?image p:P180 [ps:P180 ?depicts; wikibase:rank ?rank] .}
     ?image (schema:encodingFormat | wdt:P1163) ?mime .
     FILTER(?mime IN ('image/jpeg', 'image/png')) .
@@ -38,7 +40,7 @@ export async function handler(event) {
 
   const qid = event.path.split('/').filter(pe => pe).pop()
   let query = SPARQL.replace(/{{qid}}/g, qid).trim()
-  
+  // console.log(query)
   let resp = await fetch(cookieJar, `https://commons-query.wikimedia.org/sparql?query=${encodeURIComponent(query)}`, {
     headers: { Accept: 'application/sparql-results+json'}
   })
@@ -54,6 +56,7 @@ export async function handler(event) {
     let file = decodeURIComponent(b.url.value.split('/').pop())
     if (!data[id]) data[id] = {
       id,
+      detail_url: `https://commons.wikimedia.org/wiki/File:${file.replace(/ /g, '_').replace(/\?/g,'%3F')}`,
       source: 'wc',
       thumbnail: mwImage(file, 300),
       width: parseInt(b.width.value),
@@ -64,6 +67,8 @@ export async function handler(event) {
       depicts: {}
     }
 
+    if (b.license?.value) data[id].license = b.license.value
+    if (b.coords?.value) data[id].coords = b.coords.value.replace(/Point\(/, '').replace(/\)/, '').split(' ').map(c => Number(c).toFixed(4))
     if (b.label?.value) data[id].title = b.label.value
     if (b.description?.value) data[id].description = b.description.value
     if (b.createdby) data[id].createdBy = true

@@ -17,7 +17,7 @@ export function mwImage(mwImg, width) {
       url += '.jpg'
     }
   }
-  return url
+  return url.replace(/\?/g,'%3F')
 }
 
 export const commonsImageQualityAssessment = {
