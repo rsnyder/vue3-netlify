@@ -10,6 +10,14 @@
       @get-next="doQuery()" 
       @item-selected="itemSelected" 
     ></ve-image-grid>
+    <ve-pig 
+      id="openverse"
+      :active="isActive"
+      :total="total" 
+      :items="images" 
+      @get-next="doQuery()" 
+      @item-selected="itemSelected" 
+    ></ve-pig>
   </div>
 
   <sl-dialog :label="label" class="dialog" :style="{'--width':dialogWidth}">
@@ -27,7 +35,6 @@
   import '@shoelace-style/shoelace/dist/components/dialog/dialog.js'
   import { useEntitiesStore } from '../store/entities'
   import { storeToRefs } from 'pinia'
-  import yaml from 'js-yaml'
 
   const store = useEntitiesStore()
   const { active, qid } = storeToRefs(store)
@@ -36,9 +43,6 @@
     label: { type: String },
     id: { type: String },
   })
-
-  const OPENVERSE_CLIENT_ID = 'dSfaKEBUrRFYuN5UQyp6WXIL1YtzkH8HscMZcWo6'
-  const OPENVERSE_CLIENT_SECRET = 'kul2vCseysiMhLHWevGcsmTEEwnhaB2UpVwqHzXkPs8S5v3mk4fuiz2iKhQrQQNDS3szKN5rBhsbrUATF5ZJC3oCCHH2Buh3WdPyHWGccOWWRGQQakgg7wer1LzbxwF8'
 
   const root = ref<HTMLElement | null>(null)
   const shadowRoot = computed(() => root?.value?.parentNode as HTMLElement)

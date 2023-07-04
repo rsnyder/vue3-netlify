@@ -19,7 +19,6 @@ export async function handler(event, context, callback) {
     // Send a ping to confirm a successful connection
     await client.db('admin').command({ ping: 1 })
 
-    console.log(`Successfully connected to MongoDB at ${uri}!`)
     const imagesDb = client.db('images')
     const depictsCollection = imagesDb.collection('depicts')
     const cursor = await depictsCollection.find({ depicts: qid })

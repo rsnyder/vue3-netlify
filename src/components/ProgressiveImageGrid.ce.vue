@@ -17,7 +17,7 @@
   import { computed, nextTick, onMounted, ref, toRaw, watch } from 'vue'
   import '@shoelace-style/shoelace/dist/components/dialog/dialog.js'
   import { Pig } from '../pig'
-
+  import type { Image } from '../images'
   const emit = defineEmits(['item-selected', 'get-next'])
  
   const props = defineProps({
@@ -31,32 +31,6 @@
     isActive.value = props.active
     imageData.value = props.items as Image[] || []
   })
-
-  interface Image {
-    aspect_ratio?: number
-    attribution?: string
-    creator?: string
-    creator_url?: string
-    depicts?: string[]
-    description?: string
-    detail_url?: string
-    foreign_landing_url?: string
-    format?: string
-    id: string
-    height: number
-    license?: string
-    license_url?: string
-    license_version?: string
-    logo?: string
-    provider?: string
-    score?: number
-    source?: string
-    tags?: string[]
-    title?: string
-    thumbnail: string
-    url?: string
-    width: number
-  }
 
   const root = ref<HTMLElement | null>(null)
   const shadowRoot = computed(() => root?.value?.parentNode)
@@ -93,8 +67,12 @@
     let added = imageData.value.slice(prior?.length || 0, imageData.value.length)
     await checkImagesSizes(added)
 
-    if (pig) pig.addImages(added)
-    else initPig()
+    if (pig) {
+      if (added.length) pig.addImages(added)
+      else pig.update(imageData.value)
+    } else {
+      initPig()
+    }
   })
 
   function imageSelected(index:number) {

@@ -247,12 +247,6 @@ export class Pig {
 
     }
 
-    addImages(imageData: any[]) {
-      this.images = this.images.concat(this._parseImageData(imageData, this.images.length))
-      this._computeLayout()
-      // console.log(`addImages: ${imageData.length} => ${this.images.length}`)
-    }
-
     _getTransitionTimeout() {
         const transitionTimeoutScaleFactor = 1.5;
         return this.settings.transitionSpeed * transitionTimeoutScaleFactor;
@@ -427,7 +421,22 @@ export class Pig {
       }
     }
 
-    enable() {  
+    addImages(imageData: any[]) {
+      this.images = this.images.concat(this._parseImageData(imageData, this.images.length))
+      this._computeLayout()
+      console.log(`addImages: ${imageData.length} => ${this.images.length}`)
+    }
+
+    update(imageData: any[]) {
+      console.log(`update: ${imageData.length}`)
+      this.container.querySelectorAll('.pig-figure').forEach((el) => el.remove() )
+      this.images = this._parseImageData(imageData)
+      this._computeLayout()
+      this._doLayout();
+
+    }
+
+    enable() {
       let time = Date.now();
       const wait = 100;
       const _this = this
@@ -469,7 +478,7 @@ export class Pig {
     disable() {
       this.scroller.removeEventListener('scroll', this.onScroll);
       optimizedResize.disable();
-      this.container.querySelectorAll('figure').forEach((el) => el.remove())
+      this.container.querySelectorAll('.pig-figure').forEach((el) => el.remove() )
       return this;
     }
 
@@ -509,7 +518,7 @@ export class ProgressiveImage {
     this.filename = singleImageData.file;
     this.thumbnailSrc = singleImageData.thumbnail;
     this.logo = singleImageData.logo;
-    this.license = singleImageData.license_code;
+    this.license = singleImageData.license?.code;
     this.index = index;
 
     // The Pig instance
